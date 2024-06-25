@@ -1,0 +1,45 @@
+{
+  "name": "@skyleague/starchart",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./.dist/index.js",
+    "./package.json": "./package.json",
+    "./*.js": "./.dist/*.js"
+  },
+  "types": "./.dist/index.d.ts",
+  "files": [".dist", "package.json"],
+  "scripts": {
+    "check:project": "node-standards lint",
+    "lint": "biome check",
+    "lint:fix": "npm run lint -- --write --unsafe",
+    "prepare": "husky || true",
+    "build": "tsc -p tsconfig.dist.json",
+    "build:docs": "npx typedoc",
+    "check:coverage": "vitest run --coverage=true",
+    "check:types": "tsc -p tsconfig.json",
+    "package": "rm -rf .dist && npm run build",
+    "test": "vitest run"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@skyleague/node-standards": "^7.2.0",
+    "@skyleague/therefore": "^5.9.1",
+    "typescript": "^5.5.2"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "registry": "https://registry.npmjs.org"
+  },
+  "node-standards": {
+    "extends": "library",
+    "ignorePatterns": [".github/workflows/package.yml", "test/__test__/+setup.ts", "typedoc.cjs", "vitest.config.ts"],
+    "rules": {
+      "scripts": true
+    }
+  }
+}

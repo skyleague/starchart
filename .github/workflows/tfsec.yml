@@ -1,0 +1,12 @@
+name: tfsec
+on: push
+
+jobs:
+  tfsec:
+    uses: skyleague/node-standards/.github/workflows/reusable-tfsec.yml@main
+    secrets:
+      GITHUB_APP_ID: ${{ secrets.STARCHART_MODULES_APP_ID }}
+      GITHUB_APP_PEM: ${{ secrets.STARCHART_MODULES_APP_PEM }}
+    with:
+      terraform-version: '1.4.6'
+      working-directory: './'

@@ -1,0 +1,501 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StarChartHandler",
+  "type": "object",
+  "description": "The definition of a Star Chart handler.",
+  "properties": {
+    "handler": {
+      "type": "string",
+      "description": "The name of the handler function to invoke."
+    },
+    "functionId": {
+      "type": "string",
+      "description": "The ID of the function. Defaults to the name of the folder."
+    },
+    "functionName": {
+      "type": "string",
+      "description": "The name of the function. Defaults to the function ID."
+    },
+    "environment": {
+      "type": "object",
+      "description": "The environment variables to set for the handler.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "warmer": {
+      "type": "object",
+      "description": "The warmer to use to keep the handler warm. Defaults to enabled, rate: 10 minutes.",
+      "properties": {
+        "ruleName": {
+          "type": "string",
+          "description": "The name to give the scheduled rule. Defaults to prefixing the name of the handler."
+        },
+        "ruleNamePrefix": {
+          "type": "string",
+          "description": "The prefix to give the scheduled rule. Defaults to the name of the handler."
+        },
+        "description": {
+          "type": "string",
+          "description": "The description to give the scheduled rule."
+        },
+        "rate": {
+          "type": "string",
+          "description": "The rate at which to invoke the handler. Must be a valid rate expression. See https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html for more information."
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether the rule should be enabled. Defaults to true."
+        },
+        "input": {
+          "description": "The input to pass to the handler. Defaults to an empty object. Conflicts with inputPath and inputTransformer"
+        },
+        "inputPath": {
+          "type": "string",
+          "description": "The JSONPath to use to extract the input to pass to the handler. Conflicts with input and inputTransformer."
+        },
+        "inputTransformer": {
+          "type": "object",
+          "description": "The input transformer to use to transform the input to pass to the handler. Conflicts with input and inputPath. See https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html for more information.",
+          "properties": {
+            "inputPaths": {
+              "type": "object",
+              "description": "The JSONPaths to use to extract the input to pass to the handler.",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "inputTemplate": {
+              "type": "string",
+              "description": "The template to use to transform the input to pass to the handler."
+            }
+          },
+          "required": ["inputTemplate"],
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "events": {
+      "$ref": "#/$defs/Events"
+    },
+    "publishes": {
+      "$ref": "#/$defs/Publishes"
+    },
+    "resources": {
+      "$ref": "#/$defs/Resources"
+    },
+    "inlinePolicies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "runtime": {
+      "enum": ["nodejs16.x", "nodejs18.x", "python3.8", "python3.9", "python3.10"]
+    },
+    "memorySize": {
+      "type": "number"
+    },
+    "timeout": {
+      "type": "number"
+    },
+    "vpcConfig": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "Events": {
+      "type": "array",
+      "items": {
+        "description": "The events that will trigger the handler.",
+        "anyOf": [
+          {
+            "$ref": "#/$defs/HttpTrigger"
+          },
+          {
+            "$ref": "#/$defs/SqsTrigger"
+          },
+          {
+            "$ref": "#/$defs/ScheduledTrigger"
+          }
+        ]
+      }
+    },
+    "HttpTrigger": {
+      "type": "object",
+      "properties": {
+        "http": {
+          "type": "object",
+          "description": "Subscribes to an HTTP route.",
+          "properties": {
+            "method": {
+              "enum": ["get", "post", "put", "delete", "patch", "options", "head"]
+            },
+            "path": {
+              "type": "string",
+              "description": "The HTTP path for the route. Must start with / and must not end with /."
+            },
+            "authorizer": {
+              "type": "string",
+              "description": "The name of the authorizer to use for the route."
+            }
+          },
+          "required": ["method", "path"],
+          "additionalProperties": true
+        }
+      },
+      "required": ["http"],
+      "additionalProperties": true
+    },
+    "SqsTrigger": {
+      "type": "object",
+      "properties": {
+        "sqs": {
+          "type": "object",
+          "description": "Subscribes to an SQS queue.",
+          "properties": {
+            "queueId": {
+              "type": "string",
+              "description": "The ID of the SQS queue to subscribe to."
+            },
+            "batchSize": {
+              "type": "number",
+              "description": "The maximum number of messages to retrieve from the queue at once. Default is 1."
+            },
+            "fifo": {
+              "type": "object",
+              "description": "The FIFO settings to use when retrieving messages from the queue.",
+              "properties": {
+                "enabled": {
+                  "type": "string",
+                  "description": "Whether to enable FIFO queue support. Default is false."
+                },
+                "contentBasedDeduplication": {
+                  "type": "boolean",
+                  "description": "Whether to enable content-based deduplication. Default is false.",
+                  "default": true
+                },
+                "deduplicationScope": {
+                  "description": "The scope of the deduplication. Default is queue.",
+                  "default": "queue",
+                  "enum": ["messageGroup", "queue"]
+                },
+                "throughputLimit": {
+                  "description": "The throughput limit of the queue. Default is perQueue.",
+                  "default": "perQueue",
+                  "enum": ["perQueue", "perMessageGroupId"]
+                }
+              },
+              "additionalProperties": true
+            },
+            "kmsMasterKeyId": {
+              "type": "string",
+              "description": "The ID of the KMS key to use to decrypt messages."
+            },
+            "eventbridge": {
+              "type": "object",
+              "description": "The EventBridge event bus to subscribe to.",
+              "properties": {
+                "eventBusId": {
+                  "type": "string",
+                  "description": "The name of the event bus to subscribe to."
+                },
+                "eventPattern": {
+                  "type": "object",
+                  "description": "The event pattern to filter on.",
+                  "properties": {
+                    "detail-type": {
+                      "type": "array",
+                      "description": "The detail type of the event.",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "required": ["eventBusId", "eventPattern"],
+              "additionalProperties": true
+            }
+          },
+          "required": ["queueId"],
+          "additionalProperties": true
+        }
+      },
+      "required": ["sqs"],
+      "additionalProperties": true
+    },
+    "ScheduledTrigger": {
+      "type": "object",
+      "properties": {
+        "schedule": {
+          "type": "object",
+          "description": "Subscribes to a scheduled event.",
+          "properties": {
+            "ruleName": {
+              "type": "string",
+              "description": "The name to give the scheduled rule. Defaults to prefixing the name of the handler."
+            },
+            "ruleNamePrefix": {
+              "type": "string",
+              "description": "The prefix to give the scheduled rule. Defaults to the name of the handler."
+            },
+            "description": {
+              "type": "string",
+              "description": "The description to give the scheduled rule."
+            },
+            "rate": {
+              "type": "string",
+              "description": "The rate at which to invoke the handler. Must be a valid rate expression. See https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html for more information."
+            },
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether the rule should be enabled. Defaults to true."
+            },
+            "input": {
+              "description": "The input to pass to the handler. Defaults to an empty object. Conflicts with inputPath and inputTransformer"
+            },
+            "inputPath": {
+              "type": "string",
+              "description": "The JSONPath to use to extract the input to pass to the handler. Conflicts with input and inputTransformer."
+            },
+            "inputTransformer": {
+              "type": "object",
+              "description": "The input transformer to use to transform the input to pass to the handler. Conflicts with input and inputPath. See https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html for more information.",
+              "properties": {
+                "inputPaths": {
+                  "type": "object",
+                  "description": "The JSONPaths to use to extract the input to pass to the handler.",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "inputTemplate": {
+                  "type": "string",
+                  "description": "The template to use to transform the input to pass to the handler."
+                }
+              },
+              "required": ["inputTemplate"],
+              "additionalProperties": true
+            }
+          },
+          "required": ["rate"],
+          "additionalProperties": true
+        }
+      },
+      "required": ["schedule"],
+      "additionalProperties": true
+    },
+    "Publishes": {
+      "type": "array",
+      "description": "The events that the handler may publish.",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/PublishEventbridge"
+          },
+          {
+            "$ref": "#/$defs/PublishSqs"
+          }
+        ]
+      }
+    },
+    "PublishEventbridge": {
+      "type": "object",
+      "properties": {
+        "eventbridge": {
+          "type": "object",
+          "description": "Publishes an event to an EventBridge event bus.",
+          "properties": {
+            "eventBusId": {
+              "type": "string",
+              "description": "The name of the event bus to publish to."
+            },
+            "detailType": {
+              "description": "The detail type of the event.",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["detailType", "eventBusId"],
+          "additionalProperties": true
+        }
+      },
+      "required": ["eventbridge"],
+      "additionalProperties": true
+    },
+    "PublishSqs": {
+      "type": "object",
+      "description": "Publishes an event to an SQS queue.",
+      "properties": {
+        "sqs": {
+          "type": "object",
+          "properties": {
+            "queueId": {
+              "type": "string",
+              "description": "The ID of the SQS queue to publish to."
+            }
+          },
+          "required": ["queueId"],
+          "additionalProperties": true
+        }
+      },
+      "required": ["sqs"],
+      "additionalProperties": true
+    },
+    "Resources": {
+      "type": "array",
+      "description": "The resources that the function will use.",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/DynamodbResource"
+          },
+          {
+            "$ref": "#/$defs/SecretResource"
+          },
+          {
+            "$ref": "#/$defs/ParameterResource"
+          },
+          {
+            "$ref": "#/$defs/S3Resource"
+          }
+        ]
+      }
+    },
+    "DynamodbResource": {
+      "type": "object",
+      "description": "A DynamoDB table that is used by the function.",
+      "properties": {
+        "dynamodb": {
+          "type": "object",
+          "description": "A DynamoDB table that is used by the function.",
+          "properties": {
+            "tableId": {
+              "type": "string",
+              "description": "The ID of the table."
+            },
+            "actions": {
+              "type": "array",
+              "items": {
+                "enum": ["read", "write", "scan", "delete", "put", "update", "get", "query"]
+              },
+              "minItems": 1
+            }
+          },
+          "required": ["actions", "tableId"],
+          "additionalProperties": true
+        }
+      },
+      "required": ["dynamodb"],
+      "additionalProperties": true
+    },
+    "SecretResource": {
+      "type": "object",
+      "description": "A secret that is used by the function.",
+      "properties": {
+        "secret": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The path to the secret."
+            },
+            {
+              "type": "object",
+              "description": "A secret that is used by the function.",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "The path to the secret."
+                },
+                "actions": {
+                  "type": "array",
+                  "items": {
+                    "enum": ["read", "rotation"]
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": ["actions", "path"],
+              "additionalProperties": true
+            }
+          ]
+        }
+      },
+      "required": ["secret"],
+      "additionalProperties": true
+    },
+    "ParameterResource": {
+      "type": "object",
+      "description": "An SSM parameter that is used by the function.",
+      "properties": {
+        "parameter": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "The path to the SSM parameter."
+            },
+            {
+              "type": "object",
+              "description": "An SSM parameter that is used by the function.",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "The path to the SSM parameter."
+                },
+                "actions": {
+                  "type": "array",
+                  "items": {
+                    "const": "read"
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": ["actions", "path"],
+              "additionalProperties": true
+            }
+          ]
+        }
+      },
+      "required": ["parameter"],
+      "additionalProperties": true
+    },
+    "S3Resource": {
+      "type": "object",
+      "description": "An S3 bucket that is used by the function.",
+      "properties": {
+        "s3": {
+          "type": "object",
+          "description": "An S3 bucket that is used by the function.",
+          "properties": {
+            "bucketId": {
+              "type": "string",
+              "description": "The ID of the bucket."
+            },
+            "actions": {
+              "type": "array",
+              "items": {
+                "enum": ["read", "write", "delete", "get", "list"]
+              },
+              "minItems": 1
+            }
+          },
+          "required": ["actions", "bucketId"],
+          "additionalProperties": true
+        }
+      },
+      "required": ["s3"],
+      "additionalProperties": true
+    }
+  }
+}
