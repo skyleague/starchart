@@ -25,10 +25,10 @@ locals {
   ])
   api_definition = {
     for http_path in flatten([for event in local.http_events : event.http.path]) : http_path => {
-      for event in local.http_events : upper(event.http.method) => {
+      for event in local.http_events : upper(event.http.method) => merge({
         function_name = event.function_name
-        authorizer    = try(event.http.authorizer, null)
-      } if event.http.path == http_path
+      }, try(event.http.authorizer, null) != null ? { authorizer = event.http.authorizer } : {})
+      if event.http.path == http_path
     }
   }
   scheduled_events = merge({

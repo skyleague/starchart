@@ -3,6 +3,7 @@ variable "starchart" {
 
     default_tags   = map(string)
     aws_account_id = string
+    aws_region     = string
     bootstrap = object({
       eventing_kms_key_arn      = string
       artifacts_bucket_id       = string

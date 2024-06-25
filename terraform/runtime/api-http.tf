@@ -18,6 +18,7 @@ variable "http_api" {
       enable_simple_responses = optional(bool)
     })), {})
 
+    default_authorizer = optional(string)
   })
   description = "The custom configuration for the API Gateway. Most of it will be inferred from Lambda events."
   default     = null
@@ -27,8 +28,17 @@ locals {
   http_api_name = try(coalesce(var.http_api.name, local.config.project_name), null)
 
   _http_api_definition_parsed = try(jsondecode(var.http_api.definition), {})
+
+  _http_api_lambda_api_definition = {
+    for http_path, path_items in module.config_lambda.api_definition : http_path => {
+      for http_method, path_item in path_items : http_method => merge(path_item, {
+        authorizer = try(path_item.authorizer, var.http_api.default_authorizer, null)
+      })
+    }
+  }
+
   http_api_definition = merge(local._http_api_definition_parsed, {
-    for http_path, path_items in module.config_lambda.api_definition : http_path => merge(try(local._http_api_definition_parsed[http_path], {}), {
+    for http_path, path_items in local._http_api_lambda_api_definition : http_path => merge(try(local._http_api_definition_parsed[http_path], {}), {
       for http_method, path_item in path_items : http_method => {
 
         lambda = {
@@ -38,13 +48,14 @@ locals {
         authorizer = try(path_item.authorizer, null) == null ? null : {
           name = try(var.http_api.authorizers[path_item.authorizer].name, path_item.authorizer)
           lambda = {
-            function_name = module.config_lambda.functions[var.http_api.authorizers[path_item.authorizer].function_id].function_name
+            function_name = module.config_lambda.lambda_definitions[var.http_api.authorizers[path_item.authorizer].function_id].function_name
           }
           header             = try(var.http_api.authorizers[path_item.authorizer].header, null)
           authorizerType     = try(var.http_api.authorizers[path_item.authorizer].type, null)
           identitySource     = try(join(",", var.http_api.authorizers[path_item.authorizer].identity_source), null)
           resultTtlInSeconds = try(var.http_api.authorizers[path_item.authorizer].ttl_in_seconds, null)
         }
+
 
       }
     })
@@ -57,8 +68,8 @@ module "http_api" {
 
   name = local.http_api_name
 
-  region     = data.aws_region.current.name
-  account_id = data.aws_caller_identity.current.account_id
+  region     = var.starchart.aws_region
+  account_id = var.starchart.aws_account_id
   definition = local.http_api_definition
 
   disable_execute_api_endpoint = var.http_api.disable_execute_api_endpoint

@@ -27,8 +27,16 @@ locals {
   rest_api_name = try(coalesce(var.rest_api.name, local.config.project_name), null)
 
   _rest_api_definition_parsed = try(jsondecode(var.rest_api.definition), {})
+
+  _rest_api_lambda_api_definition = {
+    for http_path, path_items in module.config_lambda.api_definition : http_path => {
+      for http_method, path_item in path_items : http_method => merge(path_item, {
+        authorizer = try(path_item.authorizer, var.rest_api.default_authorizer, null)
+      })
+    }
+  }
   rest_api_definition = merge(local._rest_api_definition_parsed, {
-    for http_path, path_items in module.config_lambda.api_definition : http_path => merge(try(local._rest_api_definition_parsed[http_path], {}), {
+    for http_path, path_items in local._rest_api_lambda_api_definition : http_path => merge(try(local._rest_api_definition_parsed[http_path], {}), {
       for http_method, path_item in path_items : http_method => {
 
         lambda = {
@@ -38,7 +46,7 @@ locals {
         authorizer = try(path_item.authorizer, null) == null ? null : {
           name = try(var.rest_api.authorizers[path_item.authorizer].name, path_item.authorizer)
           lambda = {
-            function_name = module.config_lambda.functions[var.rest_api.authorizers[path_item.authorizer].function_id].function_name
+            function_name = module.config_lambda.lambda_definitions[var.rest_api.authorizers[path_item.authorizer].function_id].function_name
           }
           header             = try(var.rest_api.authorizers[path_item.authorizer].header, null)
           authorizerType     = try(var.rest_api.authorizers[path_item.authorizer].type, null)
@@ -51,19 +59,14 @@ locals {
   })
 }
 
-
-
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
-
 module "rest_api" {
   count  = length(keys(local.rest_api_definition)) > 0 && var.rest_api != null ? 1 : 0
   source = "git@github.com:skyleague/aws-rest-api.git?ref=v3.1.0"
 
   name = local.rest_api_name
 
-  region     = data.aws_region.current.name
-  account_id = data.aws_caller_identity.current.account_id
+  region     = var.starchart.aws_region
+  account_id = var.starchart.aws_account_id
   definition = local.rest_api_definition
 
   disable_execute_api_endpoint = var.rest_api.disable_execute_api_endpoint
