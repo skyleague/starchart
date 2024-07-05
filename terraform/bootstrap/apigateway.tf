@@ -25,7 +25,7 @@ resource "aws_iam_role" "apigateway_cloudwatch_role" {
   assume_role_policy = data.aws_iam_policy_document.apigateway_cloudwatch_role_assume_role[0].json
 }
 
-resource "aws_iam_role_policy_attachment" "logging" {
+resource "aws_iam_role_policy_attachment" "apigateway_logging" {
   count = var.attach_api_gateway_cloudwatch_role ? 1 : 0
 
   role       = aws_iam_role.apigateway_cloudwatch_role[0].id

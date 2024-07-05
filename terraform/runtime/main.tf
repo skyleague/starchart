@@ -5,10 +5,14 @@ variable "starchart" {
     aws_account_id = string
     aws_region     = string
     bootstrap = object({
-      eventing_kms_key_arn      = string
-      artifacts_bucket_id       = string
-      appconfig_application_id  = string
-      appconfig_application_arn = string
+      eventing_kms_key_arn = string
+      artifacts_bucket_id  = string
+      appconfig = object({
+        application = object({
+          id  = string
+          arn = string
+        })
+      })
     })
     config = any
     persistent = optional(object({
@@ -20,9 +24,13 @@ variable "starchart" {
       eventbridge = optional(map(object({ arn = string, id = string })), {})
 
       # check
-      secrets        = optional(map(object({ arn = string })), {})
-      ssm_parameters = optional(map(object({ arn = string })), {})
-      s3             = optional(map(object({ arn = string, id = string })), {})
+      secret        = optional(map(object({ arn = string })), {})
+      ssm_parameter = optional(map(object({ arn = string })), {})
+      s3            = optional(map(object({ arn = string, id = string })), {})
+      sqs = optional(map(object({
+        queue = object({ name = optional(string), name_prefix = optional(string), arn = string, url = string, kms_master_key_id = string, visibility_timeout_seconds = number })
+        dlq   = optional(object({ name = optional(string), name_prefix = optional(string), arn = string, url = string, kms_master_key_id = string, visibility_timeout_seconds = number }))
+      })), {})
 
     }), {})
     stacks = optional(map(object({
@@ -35,9 +43,13 @@ variable "starchart" {
         eventbridge = optional(map(object({ arn = string, id = string })), {})
 
         # check
-        secrets        = optional(map(object({ arn = string })), {})
-        ssm_parameters = optional(map(object({ arn = string })), {})
-        s3             = optional(map(object({ arn = string, id = string })), {})
+        secret        = optional(map(object({ arn = string })), {})
+        ssm_parameter = optional(map(object({ arn = string })), {})
+        s3            = optional(map(object({ arn = string, id = string })), {})
+        sqs = optional(map(object({
+          queue = object({ name = optional(string), name_prefix = optional(string), arn = string, url = string, kms_master_key_id = string, visibility_timeout_seconds = number })
+          dlq   = optional(object({ name = optional(string), name_prefix = optional(string), arn = string, url = string, kms_master_key_id = string, visibility_timeout_seconds = number }))
+        })), {})
       }), {})
     })), {})
   })
@@ -57,6 +69,6 @@ locals {
 }
 
 
-output "name" {
-  value = var.starchart
-}
+# output "output" {
+#   value = var.starchart
+# }

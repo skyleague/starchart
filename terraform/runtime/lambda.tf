@@ -27,7 +27,7 @@ variable "lambda" {
 
 locals {
   functions_dir              = coalesce(var.lambda.functions_dir, var.directory)
-  function_prefix            = coalesce(var.lambda.function_prefix, "${local.config.stack_prefix}-")
+  function_prefix            = coalesce(var.lambda.function_prefix, "${local.config.stack}-")
   local_artifact_path_prefix = coalesce(var.lambda.local_artifact.path_prefix, "${local.config.repo_root}/.artifacts/${replace(local.functions_dir, "${local.config.repo_root}/src", "")}/")
 
   handler_file = coalesce(var.lambda.handler_file, "handler.yml")
@@ -43,9 +43,7 @@ module "config_lambda" {
   function_prefix    = local.function_prefix
   template_variables = var.template_variables
 
-  appconfig_application_arn = local.bootstrap.appconfig_application_arn
-
-  # sqs = module.sqs
+  appconfig_application_arn = local.bootstrap.appconfig.application.arn
 
   resources = local.resources
 
@@ -81,9 +79,14 @@ module "lambda" {
   }
 }
 
-# output "lambdas" {
-#   value = module.lambda
-# }
+output "lambdas" {
+  value = {
+    for key, lambda in module.config_lambda.lambda_definitions : key => {
+      function_name = lambda.function_name
+      # arn           = lambda.arn
+    }
+  }
+}
 
 # output "config_lambda" {
 #   value = module.config_lambda

@@ -1,60 +1,25 @@
-
-
-variable "queue_settings" {
+variable "persistent_queues" {
   type = map(object({
-    name                              = optional(string)
-    name_prefix                       = optional(string)
-    visibility_timeout_seconds        = optional(number)
-    max_message_size                  = optional(number)
-    delay_seconds                     = optional(number)
-    message_retention_seconds         = optional(number)
-    receive_wait_time_seconds         = optional(number)
-    policy                            = optional(string)
-    kms_master_key_id                 = optional(string)
-    kms_data_key_reuse_period_seconds = optional(number)
-    tags                              = optional(map(string))
-
-    fifo = optional(object({
-      enabled                     = optional(bool)
-      content_based_deduplication = optional(bool)
-      deduplication_scope         = optional(string)
-      throughput_limit            = optional(string)
-    }))
-
-    dlq = optional(object({
-      enabled           = optional(bool)
-      suffix            = optional(string)
-      max_receive_count = optional(number)
-      redrive_enabled   = optional(bool)
-
-      visibility_timeout_seconds = optional(number)
-      message_retention_seconds  = optional(number)
-      delay_seconds              = optional(number)
-      receive_wait_time_seconds  = optional(number)
-      policy                     = optional(string)
-    }))
+    queue = object({ name = optional(string), name_prefix = optional(string), arn = string, url = string, kms_master_key_id = string, visibility_timeout_seconds = number })
+    dlq   = optional(object({ name = optional(string), name_prefix = optional(string), arn = string, url = string, kms_master_key_id = string, visibility_timeout_seconds = number }))
   }))
 
-  description = "The settings for the queues."
+  description = "The queues created by the persistent stack."
   default     = {}
+  nullable    = false
 }
 
 
 locals {
-  queue_settings = coalesce(try(var.queue_settings, null), {})
   handlers = [
     for f in fileset(var.functions_dir, "**/${var.handler_file}") : yamldecode(
       file("${var.functions_dir}/${f}")
     )
   ]
-  queue_ids = distinct(
-    concat(
-      flatten([for definition in local.handlers : [
-        for event in try(definition.events, []) : event.sqs.queueId if try(event.sqs, null) != null
-      ]]),
-      keys(local.queue_settings)
-    )
-  )
+  queue_ids = toset(flatten([for definition in local.handlers : [
+    for event in try(definition.events, []) : event.sqs.queueId if try(event.sqs, null) != null
+  ]]))
+
   handler_events = {
     for queue_id in local.queue_ids : queue_id => flatten([
       for definition in local.handlers : [
@@ -75,17 +40,13 @@ locals {
   }
   queue_names = {
     for queue_id in local.queue_ids : queue_id => try(
-      coalesce(
-        try(local.queue_settings[queue_id].name, null),
-        try(local.handler_queue_settings[queue_id].sqs.name, null)
-      ),
+      try(local.handler_queue_settings[queue_id].sqs.name, null),
       null
     )
   }
   queue_name_prefixes = {
     for queue_id in local.queue_ids : queue_id => local.queue_names[queue_id] == null ? (
       coalesce(
-        try(local.queue_settings[queue_id].name_prefix, null),
         try(local.handler_queue_settings[queue_id].sqs.namePrefix, null),
         queue_id
       )
@@ -100,18 +61,15 @@ locals {
       # Settings with custom defaults
       {
         visibility_timeout_seconds = coalesce(
-          try(local.queue_settings[queue_id].visibility_timeout_seconds, null),
           try(local.handler_queue_settings[queue_id].sqs.visibilityTimeoutSeconds, null),
           try(try(local.handler_queue_settings[queue_id].timeout, 30) + 30, null),
           30
         )
         message_retention_seconds = coalesce(
-          try(local.queue_settings[queue_id].message_retention_seconds, null),
           try(local.handler_queue_settings[queue_id].sqs.messageRetentionSeconds, null),
           1209600
         )
         kms_master_key_id = coalesce(
-          try(local.queue_settings[queue_id].kms_master_key_id, null),
           try(local.handler_queue_settings[queue_id].sqs.kmsMasterKeyId, null),
           try(local.handler_queue_settings[queue_id].sqs.eventbridge, null) != null ? var.eventbridge_kms_key_id : "alias/aws/sqs"
         )
@@ -127,7 +85,6 @@ locals {
           tags                              = "tags"
           } : sk => try(
           coalesce(
-            try(local.queue_settings[queue_id][sk], null),
             try(local.handler_queue_settings[queue_id].sqs[ck], null)
           ),
           null
@@ -135,23 +92,17 @@ locals {
       },
       # FIFO settings and DLQ settings
       {
-        fifo = try(local.queue_settings[queue_id].fifo.enabled, local.handler_queue_settings[queue_id].sqs.fifo.enabled, false) == true ? {
+        fifo = try(local.handler_queue_settings[queue_id].sqs.fifo.enabled, false) == true ? {
           for k, v in merge({ enabled = true }, {
             for sk, ck in {
               content_based_deduplication = "contentBasedDeduplication"
               deduplication_scope         = "deduplicationScope"
               throughput_limit            = "throughputLimit"
-              } : sk => try(
-              coalesce(
-                try(local.queue_settings[queue_id].fifo[sk], null),
-                try(local.handler_queue_settings[queue_id].sqs.fifo[ck], null)
-              ),
-              null
-            )
+            } : sk => try(local.handler_queue_settings[queue_id].sqs.fifo[ck], null)
           }) : k => v if v != null # Omit null values
         } : null
 
-        dlq = try(local.queue_settings[queue_id].dlq.enabled, local.handler_queue_settings[queue_id].sqs.dlq.enabled, true) == true ? {
+        dlq = try(local.handler_queue_settings[queue_id].sqs.dlq.enabled, true) == true ? {
           for k, v in merge({ enabled = true }, {
             for sk, ck in {
               suffix                     = "suffix"
@@ -162,17 +113,11 @@ locals {
               delay_seconds              = "delaySeconds"
               receive_wait_time_seconds  = "receiveWaitTimeSeconds"
               policy                     = "policy"
-              } : sk => try(
-              coalesce(
-                try(local.queue_settings[queue_id].dlq[sk], null),
-                try(local.handler_queue_settings[queue_id].sqs.dlq[ck], null)
-              ),
-              null
-            )
+            } : sk => try(local.handler_queue_settings[queue_id].sqs.dlq[ck], null)
           }) : k => v if v != null # Omit null values
         } : null
       }
-    )
+    ) if try(var.persistent_queues[queue_id], null) == null
   }
 }
 

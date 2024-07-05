@@ -94,7 +94,7 @@ export interface StarChartHandler {
     publishes?: Publishes | undefined
     resources?: Resources | undefined
     inlinePolicies?: string[] | undefined
-    runtime?: 'nodejs16.x' | 'nodejs18.x' | 'python3.8' | 'python3.9' | 'python3.10' | undefined
+    runtime?: 'nodejs16.x' | 'nodejs18.x' | 'nodejs20.x' | 'python3.8' | 'python3.9' | 'python3.10' | undefined
     memorySize?: number | undefined
     timeout?: number | undefined
     vpcConfig?: string | undefined

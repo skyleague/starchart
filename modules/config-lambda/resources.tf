@@ -1,10 +1,12 @@
 variable "resources" {
   type = object({
-    secrets        = optional(map(object({ arn = string })), {})
-    ssm_parameters = optional(map(object({ arn = string })), {})
-    s3             = optional(map(object({ arn = string, id = string, env = map(string) })), {})
-    dynamodb       = optional(map(object({ arn = string, id = string, env = map(string) })), {})
-    eventbridge    = optional(map(object({ arn = string, id = string, env = map(string) })), {})
+    secret        = optional(map(object({ arn = string })), {})
+    ssm_parameter = optional(map(object({ arn = string })), {})
+    s3            = optional(map(object({ arn = string, id = string, env = map(string) })), {})
+    dynamodb      = optional(map(object({ arn = string, id = string, env = map(string) })), {})
+    eventbridge   = optional(map(object({ arn = string, id = string, env = map(string) })), {})
+    sqs_queue     = optional(map(object({ name = optional(string), name_prefix = optional(string), arn = string, url = string, kms_master_key_id = string, visibility_timeout_seconds = number, env = map(string) })), {})
+    sqs_dlq       = optional(map(object({ name = optional(string), name_prefix = optional(string), arn = string, url = string, kms_master_key_id = string, visibility_timeout_seconds = number, env = map(string) })), {})
 
     appconfig = optional(object({
       configuration_profiles = map(object({ configuration_profile_id = string })),
@@ -36,14 +38,14 @@ variable "appconfig_application_arn" {
 locals {
   function_resources = {
     for function_id, definition in local.handlers : function_id => {
-      secrets = [
+      secret = [
         for resource in try(definition.resources, []) : {
           path           = try(resource.secret.path, resource.secret)
           actions        = try(resource.secret.actions, ["read"])
           actions_string = join(",", sort(toset(try(resource.secret.actions, ["read"]))))
         } if try(resource.secret, null) != null
       ]
-      ssm_parameters = [
+      ssm_parameter = [
         for resource in try(definition.resources, []) : {
           path           = try(resource.parameter.path, resource.parameter)
           actions        = try(resource.parameter.actions, ["read"])
@@ -61,8 +63,16 @@ locals {
         for resource in try(definition.resources, []) : {
           tableId        = resource.dynamodb.tableId
           actions        = resource.dynamodb.actions
-          actions_string = join(",", sort(toset(resource.dynamodb.actions)))
+          iamActions     = try(flatten([resource.dynamodb.iamActions]), [])
+          actions_string = join(",", sort(toset(flatten([resource.dynamodb.actions, try(resource.dynamodb.iamActions, [])]))))
         } if try(resource.dynamodb, null) != null
+      ]
+      custom = [
+        for resource in try(definition.resources, []) : {
+          arn                = resource.custom.arn
+          iam_actions        = flatten([resource.custom.iamActions])
+          iam_actions_string = join(",", sort(toset(flatten([resource.custom.iamActions]))))
+        } if try(resource.custom, null) != null
       ]
       appconfig = concat(try(var.resources.appconfig.configuration_profiles.default, null) != null ? [{ configuration_profile_id = "default" }] : [], [
         # TODO: Add support for multiple configuration profiles
@@ -72,7 +82,7 @@ locals {
 }
 
 data "aws_iam_policy_document" "secrets_access" {
-  for_each = { for function_id, definition in local.function_resources : function_id => definition.secrets if length(try(definition.secrets, [])) > 0 }
+  for_each = { for function_id, definition in local.function_resources : function_id => definition.secret if length(try(definition.secret, [])) > 0 }
 
   dynamic "statement" {
     for_each = merge([
@@ -100,14 +110,14 @@ data "aws_iam_policy_document" "secrets_access" {
       ))
 
       resources = [
-        for secret in each.value : var.resources.secrets[secret.path].arn if secret.actions_string == statement.key
+        for secret in each.value : var.resources.secret[secret.path].arn if secret.actions_string == statement.key
       ]
     }
   }
 }
 
 data "aws_iam_policy_document" "ssm_parameters_access" {
-  for_each = { for function_id, definition in local.function_resources : function_id => definition.ssm_parameters if length(try(definition.ssm_parameters, [])) > 0 }
+  for_each = { for function_id, definition in local.function_resources : function_id => definition.ssm_parameter if length(try(definition.ssm_parameter, [])) > 0 }
 
   dynamic "statement" {
     for_each = merge([
@@ -129,7 +139,7 @@ data "aws_iam_policy_document" "ssm_parameters_access" {
       ))
 
       resources = [
-        for parameter in each.value : var.resources.ssm_parameters[parameter.path].arn if parameter.actions_string == statement.key
+        for parameter in each.value : var.resources.ssm_parameter[parameter.path].arn if parameter.actions_string == statement.key
       ]
     }
   }
@@ -181,7 +191,7 @@ data "aws_iam_policy_document" "dynamodb_access" {
     for_each = merge([
       for table in each.value : zipmap(
         [table.actions_string],
-        [table.actions]
+        [{ actions = table.actions, iamActions = table.iamActions }]
       )
     ]...)
 
@@ -189,29 +199,33 @@ data "aws_iam_policy_document" "dynamodb_access" {
       effect = "Allow"
 
       actions = toset(concat(
-        anytrue([for action in ["read", "get"] : contains(statement.value, action)]) ? [
+        anytrue([for action in ["read", "get"] : contains(statement.value.actions, action)]) ? [
           "dynamodb:GetItem",
         ] : [],
-        anytrue([for action in ["read", "query"] : contains(statement.value, action)]) ? [
+        anytrue([for action in ["read", "query"] : contains(statement.value.actions, action)]) ? [
           "dynamodb:Query",
         ] : [],
-        anytrue([for action in ["write", "put"] : contains(statement.value, action)]) ? [
+        anytrue([for action in ["write", "put"] : contains(statement.value.actions, action)]) ? [
           "dynamodb:PutItem",
         ] : [],
-        anytrue([for action in ["write", "update"] : contains(statement.value, action)]) ? [
+        anytrue([for action in ["write", "update"] : contains(statement.value.actions, action)]) ? [
           "dynamodb:UpdateItem",
         ] : [],
-        contains(statement.value, "delete") ? [
+        contains(statement.value.actions, "delete") ? [
           "dynamodb:DeleteItem",
         ] : [],
-        contains(statement.value, "scan") ? [
+        contains(statement.value.actions, "scan") ? [
           "dynamodb:Scan",
         ] : [],
+        statement.value.iamActions,
       ))
 
-      resources = [
-        for table in each.value : var.resources.dynamodb[table.tableId].arn if table.actions_string == statement.key
-      ]
+      resources = flatten([
+        for arn in [for table in each.value : var.resources.dynamodb[table.tableId].arn if table.actions_string == statement.key] : [
+          arn,
+          "${arn}/index/*",
+        ]
+      ])
     }
   }
 }
@@ -230,6 +244,30 @@ data "aws_iam_policy_document" "appconfig_configuration_profile_access" {
         "${var.appconfig_application_arn}/*",
       ]
     ])
+  }
+}
+
+data "aws_iam_policy_document" "custom_access" {
+  for_each = { for function_id, definition in local.function_resources : function_id => definition.custom if length(try(definition.custom, [])) > 0 }
+
+  dynamic "statement" {
+    for_each = merge([
+      for custom in each.value : zipmap(
+        [custom.iam_actions_string],
+        [custom.iam_actions]
+      )
+    ]...)
+
+    content {
+      effect = "Allow"
+
+      actions = statement.value
+
+      resources = flatten([
+        for custom in each.value : custom.arn if custom.iam_actions_string == statement.key
+      ])
+    }
+
   }
 }
 

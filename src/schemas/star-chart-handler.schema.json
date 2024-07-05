@@ -92,7 +92,7 @@
       }
     },
     "runtime": {
-      "enum": ["nodejs16.x", "nodejs18.x", "python3.8", "python3.9", "python3.10"]
+      "enum": ["nodejs16.x", "nodejs18.x", "nodejs20.x", "python3.8", "python3.9", "python3.10"]
     },
     "memorySize": {
       "type": "number"
@@ -165,58 +165,52 @@
               "description": "The maximum number of messages to retrieve from the queue at once. Default is 1."
             },
             "fifo": {
-              "type": "object",
-              "description": "The FIFO settings to use when retrieving messages from the queue.",
-              "properties": {
-                "enabled": {
-                  "type": "string",
-                  "description": "Whether to enable FIFO queue support. Default is false."
-                },
-                "contentBasedDeduplication": {
-                  "type": "boolean",
-                  "description": "Whether to enable content-based deduplication. Default is false.",
-                  "default": true
-                },
-                "deduplicationScope": {
-                  "description": "The scope of the deduplication. Default is queue.",
-                  "default": "queue",
-                  "enum": ["messageGroup", "queue"]
-                },
-                "throughputLimit": {
-                  "description": "The throughput limit of the queue. Default is perQueue.",
-                  "default": "perQueue",
-                  "enum": ["perQueue", "perMessageGroupId"]
-                }
-              },
-              "additionalProperties": true
+              "$ref": "#/$defs/FifoSettings"
+            },
+            "dlq": {
+              "$ref": "#/$defs/DlqSettings"
+            },
+            "visibilityTimeoutSeconds": {
+              "type": "number",
+              "description": "The visibility timeout of the queue."
+            },
+            "messageRetentionPeriodSeconds": {
+              "type": "number",
+              "description": "The message retention period of the queue."
             },
             "kmsMasterKeyId": {
               "type": "string",
               "description": "The ID of the KMS key to use to decrypt messages."
             },
-            "eventbridge": {
+            "maxMessageSize": {
+              "type": "number",
+              "description": "The maximum message size of the queue."
+            },
+            "delaySeconds": {
+              "type": "number",
+              "description": "The delay of the queue."
+            },
+            "receiveWaitTimeSeconds": {
+              "type": "number",
+              "description": "The receive wait time of the queue."
+            },
+            "policy": {
+              "type": "string",
+              "description": "The policy of the queue."
+            },
+            "kmsDataKeyReusePeriodSeconds": {
+              "type": "number",
+              "description": "The data key reuse period of the queue."
+            },
+            "tags": {
               "type": "object",
-              "description": "The EventBridge event bus to subscribe to.",
-              "properties": {
-                "eventBusId": {
-                  "type": "string",
-                  "description": "The name of the event bus to subscribe to."
-                },
-                "eventPattern": {
-                  "type": "object",
-                  "description": "The event pattern to filter on.",
-                  "properties": {
-                    "detail-type": {
-                      "type": "array",
-                      "description": "The detail type of the event.",
-                      "items": {}
-                    }
-                  },
-                  "additionalProperties": true
-                }
-              },
-              "required": ["eventBusId", "eventPattern"],
-              "additionalProperties": true
+              "description": "The tags to apply to the queue.",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "eventbridge": {
+              "$ref": "#/$defs/EventbridgeSettings"
             }
           },
           "required": ["queueId"],
@@ -224,6 +218,95 @@
         }
       },
       "required": ["sqs"],
+      "additionalProperties": true
+    },
+    "FifoSettings": {
+      "type": "object",
+      "description": "The FIFO settings to use when retrieving messages from the queue.",
+      "properties": {
+        "enabled": {
+          "type": "string",
+          "description": "Whether to enable FIFO queue support. Default is false."
+        },
+        "contentBasedDeduplication": {
+          "type": "boolean",
+          "description": "Whether to enable content-based deduplication. Default is false.",
+          "default": true
+        },
+        "deduplicationScope": {
+          "description": "The scope of the deduplication. Default is queue.",
+          "default": "queue",
+          "enum": ["messageGroup", "queue"]
+        },
+        "throughputLimit": {
+          "description": "The throughput limit of the queue. Default is perQueue.",
+          "default": "perQueue",
+          "enum": ["perQueue", "perMessageGroupId"]
+        }
+      },
+      "additionalProperties": true
+    },
+    "DlqSettings": {
+      "type": "object",
+      "description": "The dead-letter queue settings to use when messages are not processed.",
+      "properties": {
+        "suffix": {
+          "type": "string",
+          "description": "The suffix to append to the queue name to create the DLQ."
+        },
+        "maxReceiveCount": {
+          "type": "number",
+          "description": "The maximum number of times to receive a message."
+        },
+        "redriveEnabled": {
+          "type": "boolean",
+          "description": "Whether to enable the redrive policy."
+        },
+        "visibilityTimeoutSeconds": {
+          "type": "number",
+          "description": "The visibility timeout of the DLQ."
+        },
+        "messageRetentionPeriodSeconds": {
+          "type": "number",
+          "description": "The message retention period of the DLQ."
+        },
+        "delaySeconds": {
+          "type": "number",
+          "description": "The delay of the DLQ."
+        },
+        "receiveWaitTimeSeconds": {
+          "type": "number",
+          "description": "The receive wait time of the DLQ."
+        },
+        "policy": {
+          "type": "string",
+          "description": "The policy of the DLQ."
+        }
+      },
+      "additionalProperties": true
+    },
+    "EventbridgeSettings": {
+      "type": "object",
+      "description": "The EventBridge event bus to subscribe to.",
+      "properties": {
+        "eventBusId": {
+          "type": "string",
+          "description": "The name of the event bus to subscribe to."
+        },
+        "eventPattern": {
+          "type": "object",
+          "description": "The event pattern to filter on.",
+          "properties": {
+            "detail-type": {
+              "type": "array",
+              "description": "The detail type of the event.",
+              "items": {}
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "required": ["eventBusId", "eventPattern"],
       "additionalProperties": true
     },
     "ScheduledTrigger": {
@@ -369,6 +452,9 @@
           },
           {
             "$ref": "#/$defs/S3Resource"
+          },
+          {
+            "$ref": "#/$defs/CustomResource"
           }
         ]
       }
@@ -387,10 +473,18 @@
             },
             "actions": {
               "type": "array",
+              "description": "The actions to allow on the table.",
               "items": {
                 "enum": ["read", "write", "scan", "delete", "put", "update", "get", "query"]
               },
               "minItems": 1
+            },
+            "iamActions": {
+              "type": "array",
+              "description": "Custom IAM actions to add to the role.",
+              "items": {
+                "type": "string"
+              }
             }
           },
           "required": ["actions", "tableId"],
@@ -495,6 +589,43 @@
         }
       },
       "required": ["s3"],
+      "additionalProperties": true
+    },
+    "CustomResource": {
+      "type": "object",
+      "description": "A custom resource that is used by the function.",
+      "properties": {
+        "custom": {
+          "type": "object",
+          "description": "A custom resource that is used by the function.",
+          "properties": {
+            "arn": {
+              "description": "The ARN of the custom resource.",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            },
+            "iamActions": {
+              "type": "array",
+              "description": "Custom IAM actions to add to the role.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["arn", "iamActions"],
+          "additionalProperties": true
+        }
+      },
+      "required": ["custom"],
       "additionalProperties": true
     }
   }

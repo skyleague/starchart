@@ -1,18 +1,20 @@
-variable "secrets" {
+variable "secret" {
   type = map(
-    object({})
+    object({
+      name = string
+    })
   )
   default  = {}
   nullable = false
 }
 
 resource "aws_secretsmanager_secret" "secret" {
-  for_each = var.secrets
+  for_each = var.secret
 
-  name = "/${local.config.stack_prefix}/${each.key}"
+  name = each.value.name
 }
 
-output "secrets" {
+output "secret" {
   value = {
     for secret, definition in aws_secretsmanager_secret.secret : secret => {
       arn = definition.arn

@@ -21,7 +21,7 @@ export const starChartHandler = $object({
     resources: $ref(resources).optional(),
 
     inlinePolicies: $string().array().optional(),
-    runtime: $enum(['nodejs16.x', 'nodejs18.x', 'python3.8', 'python3.9', 'python3.10']).optional(),
+    runtime: $enum(['nodejs16.x', 'nodejs18.x', 'nodejs20.x', 'python3.8', 'python3.9', 'python3.10']).optional(),
     memorySize: $number().optional(),
     timeout: $number().optional(),
     vpcConfig: $string().optional(),

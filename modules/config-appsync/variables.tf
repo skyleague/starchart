@@ -28,10 +28,10 @@ variable "template_variables" {
 
 variable "resources" {
   type = object({
-    secrets        = optional(map(object({ arn = string })), {})
-    ssm_parameters = optional(map(object({ arn = string })), {})
-    s3             = optional(map(object({ arn = string, id = string })), {})
-    dynamodb       = optional(map(object({ arn = string, id = string })), {})
+    secret        = optional(map(object({ arn = string })), {})
+    ssm_parameter = optional(map(object({ arn = string })), {})
+    s3            = optional(map(object({ arn = string, id = string })), {})
+    dynamodb      = optional(map(object({ arn = string, id = string })), {})
   })
   default = {}
 

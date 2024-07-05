@@ -21,11 +21,3 @@ output "domain" {
 output "repo_root" {
   value = var.repo_root
 }
-
-output "stack_prefix" {
-  value = var.stack
-}
-
-output "resource_prefix" {
-  value = "${var.environment}-${var.project_identifier}-${var.stack}"
-}

@@ -15,14 +15,15 @@ locals {
         [path_item.authorizer.name],
         [{
           type = "apiKey"
-          "x-amazon-apigateway-authtype" : "custom"
           in   = "header"
           name = coalesce(try(path_item.authorizer.header, null), "Authorization")
           "x-amazon-apigateway-authorizer" = merge(
             {
-              type                         = coalesce(try(path_item.authorizer.authorizerType, null), "request")
-              identitySource               = coalesce(try(path_item.authorizer.identitySource, null), "method.request.header.${coalesce(try(path_item.authorizer.header, null), "Authorization")}")
-              authorizerResultTtlInSeconds = coalesce(try(path_item.authorizer.resultTtlInSeconds, null), 0)
+              type                           = coalesce(try(path_item.authorizer.authorizerType, null), "request")
+              identitySource                 = coalesce(try(path_item.authorizer.identitySource, null), "method.request.header.${coalesce(try(path_item.authorizer.header, null), "Authorization")}")
+              authorizerResultTtlInSeconds   = coalesce(try(path_item.authorizer.resultTtlInSeconds, null), 0)
+              enableSimpleResponses          = coalesce(try(path_item.authorizer.enableSimpleResponses, null), false)
+              authorizerPayloadFormatVersion = coalesce(try(path_item.authorizer.authorizerPayloadFormatVersion, null), "2.0")
             },
             try({ authorizerUri = local.invoke_arns[path_item.authorizer.lambda.function_name] }, {}),
             try(jsondecode(path_item.authorizer["x-amazon-apigateway-authorizer"]), {})
