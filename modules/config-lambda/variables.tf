@@ -26,12 +26,3 @@ variable "inline_policies" {
   description = "The inline policies to be attached to the functions."
   default     = {}
 }
-
-variable "sqs" {
-  type = map(object({
-    queue = object({ arn = string, url = string, kms_master_key_id = string })
-    dlq   = object({ arn = string, url = string, kms_master_key_id = string })
-  }))
-  description = "The SQS queues that can possibly be used by the functions."
-  default     = {}
-}

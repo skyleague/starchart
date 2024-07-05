@@ -18,6 +18,13 @@ export interface DynamodbResource {
          * The ID of the table.
          */
         tableId: string
+        /**
+         * The actions to allow on the table.
+         */
         actions: [DynamodbResourceActionsArray, ...DynamodbResourceActionsArray[]]
+        /**
+         * Custom IAM actions to add to the role.
+         */
+        iamActions?: string[] | undefined
     }
 }

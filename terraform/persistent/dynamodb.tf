@@ -1,6 +1,7 @@
 variable "dynamodb" {
   type = map(
     object({
+      name = string
       hash_key = object({
         name = string
         type = optional(string, "S")
@@ -21,7 +22,7 @@ module "dynamodb" {
   for_each = var.dynamodb
   source   = "git@github.com:skyleague/aws-dynamodb.git?ref=v3.0.0"
 
-  name      = "${local.config.stack_prefix}-${each.key}"
+  name      = each.value.name
   hash_key  = each.value.hash_key
   range_key = coalesce(each.value.range_key, null)
 

@@ -1,5 +1,5 @@
 resource "aws_resourcegroups_group" "application" {
-  name = module.config.project_name
+  name = local.config.project_name
   tags = {
     Name = ""
   }
@@ -10,7 +10,7 @@ resource "aws_resourcegroups_group" "application" {
       TagFilters = [
         {
           Key    = "Name"
-          Values = [module.config.project_name]
+          Values = [local.config.project_name]
         },
       ]
     })

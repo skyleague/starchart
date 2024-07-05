@@ -31,12 +31,14 @@ variable "definition" {
       lambda = optional(object({
         function_name = string
       }))
-      name               = string
-      authorizerType     = optional(string)
-      identitySource     = optional(string)
-      header             = optional(string)
-      resultTtlInSeconds = optional(number)
-      security           = optional(list(any))
+      name                           = string
+      authorizerType                 = optional(string)
+      identitySource                 = optional(string)
+      header                         = optional(string)
+      resultTtlInSeconds             = optional(number)
+      security                       = optional(list(any))
+      authorizerPayloadFormatVersion = optional(string)
+      enableSimpleResponses          = optional(bool)
     }))
   })))
 }

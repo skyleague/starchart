@@ -1,7 +1,7 @@
 variable "s3" {
   type = map(
     object({
-      name = string
+      name_prefix = string
     })
   )
   default  = {}
@@ -12,7 +12,7 @@ module "s3" {
   for_each = var.s3
   source   = "git@github.com:skyleague/aws-s3.git?ref=v1.0.0"
 
-  bucket_name_prefix = "${local.config.environment}-${local.config.stack_prefix}-${each.value.name}"
+  bucket_name_prefix = each.value.name_prefix
 }
 
 

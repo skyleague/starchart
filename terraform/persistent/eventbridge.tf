@@ -1,6 +1,6 @@
 variable "eventbridge" {
   type = map(object({
-    name = optional(string)
+    name = string
   }))
   description = "The EventBridge configuration to be used by StarChart."
   default     = {}
@@ -9,7 +9,7 @@ variable "eventbridge" {
 resource "aws_cloudwatch_event_bus" "bus" {
   for_each = var.eventbridge
 
-  name = coalesce(each.value.name, "${local.config.stack_prefix}-${each.key}")
+  name = each.value.name
 }
 
 resource "aws_cloudwatch_event_archive" "bus" {

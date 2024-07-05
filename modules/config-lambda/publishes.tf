@@ -50,12 +50,12 @@ data "aws_iam_policy_document" "sqs_publish" {
     ]
 
     resources = [
-      for queue in each.value : var.sqs[queue.queueId].queue.arn
+      for queue in each.value : var.resources.sqs_queue[queue.queueId].arn
     ]
   }
 
   dynamic "statement" {
-    for_each = toset(flatten([for queue in each.value : var.sqs[queue.queueId].queue.kms_master_key_id if var.sqs[queue.queueId].queue.kms_master_key_id != "alias/aws/sqs"]))
+    for_each = toset(flatten([for queue in each.value : var.resources.sqs_queue[queue.queueId].kms_master_key_id if var.resources.sqs_queue[queue.queueId].kms_master_key_id != "alias/aws/sqs"]))
 
     content {
       effect = "Allow"
