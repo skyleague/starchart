@@ -1,4 +1,16 @@
-import { $array, $boolean, $enum, $number, $object, $record, $ref, $string, $unknown } from '@skyleague/therefore'
+import {
+    $array,
+    $boolean,
+    $enum,
+    $intersection,
+    $number,
+    $object,
+    $record,
+    $ref,
+    $string,
+    $union,
+    $unknown,
+} from '@skyleague/therefore'
 
 export const fifoSettings = $object({
     enabled: $string().optional().describe('Whether to enable FIFO queue support. Default is false.'),
@@ -27,12 +39,21 @@ export const dlqSettings = $object({
     policy: $string().optional().describe('The policy of the DLQ.'),
 }).describe('The dead-letter queue settings to use when messages are not processed.')
 
-export const eventbridgeSettings = $object({
-    eventBusId: $string().describe('The name of the event bus to subscribe to.'),
-    eventPattern: $object({
-        'detail-type': $array($unknown()).optional().describe('The detail type of the event.'),
-    }).describe('The event pattern to filter on.'),
-}).describe('The EventBridge event bus to subscribe to.')
+export const eventbridgeSettings = $intersection([
+    $union([
+        $object({
+            eventBusId: $string().describe('The name of the event bus to subscribe to.'),
+        }),
+        $object({
+            eventBusName: $string().describe('The name of the event bus to subscribe to.'),
+        }),
+    ]),
+    $object({
+        eventPattern: $object({
+            'detail-type': $array($unknown()).optional().describe('The detail type of the event.'),
+        }).describe('The event pattern to filter on.'),
+    }),
+]).describe('The EventBridge event bus to subscribe to.')
 
 export const sqsTrigger = $object({
     sqs: $object({

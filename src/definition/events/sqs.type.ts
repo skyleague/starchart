@@ -45,11 +45,20 @@ export interface DlqSettings {
 /**
  * The EventBridge event bus to subscribe to.
  */
-export interface EventbridgeSettings {
-    /**
-     * The name of the event bus to subscribe to.
-     */
-    eventBusId: string
+export type EventbridgeSettings = (
+    | {
+          /**
+           * The name of the event bus to subscribe to.
+           */
+          eventBusId: string
+      }
+    | {
+          /**
+           * The name of the event bus to subscribe to.
+           */
+          eventBusName: string
+      }
+) & {
     /**
      * The event pattern to filter on.
      */
