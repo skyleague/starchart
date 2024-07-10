@@ -286,28 +286,54 @@
       "additionalProperties": true
     },
     "EventbridgeSettings": {
-      "type": "object",
       "description": "The EventBridge event bus to subscribe to.",
-      "properties": {
-        "eventBusId": {
-          "type": "string",
-          "description": "The name of the event bus to subscribe to."
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "eventBusId": {
+                  "type": "string",
+                  "description": "The name of the event bus to subscribe to."
+                }
+              },
+              "required": ["eventBusId"],
+              "additionalProperties": true
+            },
+            {
+              "type": "object",
+              "properties": {
+                "eventBusName": {
+                  "type": "string",
+                  "description": "The name of the event bus to subscribe to."
+                }
+              },
+              "required": ["eventBusName"],
+              "additionalProperties": true
+            }
+          ]
         },
-        "eventPattern": {
+        {
           "type": "object",
-          "description": "The event pattern to filter on.",
           "properties": {
-            "detail-type": {
-              "type": "array",
-              "description": "The detail type of the event.",
-              "items": {}
+            "eventPattern": {
+              "type": "object",
+              "description": "The event pattern to filter on.",
+              "properties": {
+                "detail-type": {
+                  "type": "array",
+                  "description": "The detail type of the event.",
+                  "items": {}
+                }
+              },
+              "additionalProperties": true
             }
           },
+          "required": ["eventPattern"],
           "additionalProperties": true
         }
-      },
-      "required": ["eventBusId", "eventPattern"],
-      "additionalProperties": true
+      ]
     },
     "ScheduledTrigger": {
       "type": "object",

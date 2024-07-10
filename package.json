@@ -2,13 +2,20 @@
   "name": "@skyleague/starchart",
   "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/skyleague/starchart.git"
+  },
   "exports": {
     ".": "./.dist/index.js",
     "./package.json": "./package.json",
     "./*.js": "./.dist/*.js"
   },
   "types": "./.dist/index.d.ts",
-  "files": [".dist", "package.json"],
+  "files": ["bin", ".dist", "package.json"],
+  "bin": {
+    "starchart": "bin/run.js"
+  },
   "scripts": {
     "check:project": "node-standards lint",
     "lint": "biome check",
@@ -21,10 +28,20 @@
     "package": "rm -rf .dist && npm run build",
     "test": "vitest run"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@skyleague/esbuild-lambda": "^5.2.0",
+    "camelcase": "^8.0.0",
+    "find-root": "^1.1.0",
+    "globby": "^14.0.2",
+    "js-yaml": "^4.1.0",
+    "yargs": "^17.7.2"
+  },
   "devDependencies": {
     "@skyleague/node-standards": "^7.2.0",
     "@skyleague/therefore": "^5.9.1",
+    "@types/find-root": "^1.1.4",
+    "@types/js-yaml": "^4.0.9",
+    "@types/yargs": "^17.0.32",
     "typescript": "^5.5.2"
   },
   "engines": {
@@ -36,10 +53,6 @@
     "registry": "https://registry.npmjs.org"
   },
   "node-standards": {
-    "extends": "library",
-    "ignorePatterns": [".github/workflows/package.yml", "test/__test__/+setup.ts", "typedoc.cjs", "vitest.config.ts"],
-    "rules": {
-      "scripts": true
-    }
+    "extends": "yargs-cli"
   }
 }
