@@ -66,7 +66,7 @@ locals {
 
 module "rest_api" {
   count  = length(keys(local.rest_api_definition)) > 0 && var.rest_api != null && !try(var.rest_api.defer_deployment, false) ? 1 : 0
-  source = "git@github.com:skyleague/aws-rest-api.git?ref=v3.1.0"
+  source = "https://github.com/skyleague/aws-rest-api.git?ref=v3.1.0"
 
   name = local.rest_api_name
 

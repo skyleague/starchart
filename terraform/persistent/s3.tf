@@ -10,7 +10,7 @@ variable "s3" {
 
 module "s3" {
   for_each = var.s3
-  source   = "git@github.com:skyleague/aws-s3.git?ref=v1.0.0"
+  source   = "https://github.com/skyleague/aws-s3.git?ref=v1.0.0"
 
   bucket_name_prefix = each.value.name_prefix
 }
