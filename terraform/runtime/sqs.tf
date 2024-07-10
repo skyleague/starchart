@@ -8,7 +8,7 @@ module "config_sqs" {
 }
 
 module "sqs" {
-  source = "https://github.com/skyleague/aws-sqs.git?ref=v2.0.0"
+  source = "git::https://github.com/skyleague/aws-sqs.git?ref=v2.0.0"
 
   for_each = module.config_sqs.sqs_config
 
@@ -34,7 +34,7 @@ module "sqs" {
 }
 
 module "sqs_trigger" {
-  source = "https://github.com/skyleague/aws-lambda-sqs-trigger.git?ref=v2.0.0"
+  source = "git::https://github.com/skyleague/aws-lambda-sqs-trigger.git?ref=v2.0.0"
 
   for_each = module.config_lambda.sqs_triggers
 

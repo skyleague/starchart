@@ -24,7 +24,7 @@ variable "sqs" {
 }
 
 module "sqs" {
-  source   = "https://github.com/skyleague/aws-sqs.git?ref=v2.0.0"
+  source   = "git::https://github.com/skyleague/aws-sqs.git?ref=v2.0.0"
   for_each = var.sqs
 
   name_prefix = try(coalesce(each.value.name_prefix, each.value.name == null ? each.key : null), null)
