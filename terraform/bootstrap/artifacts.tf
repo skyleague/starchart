@@ -1,5 +1,5 @@
 module "artifacts_bucket" {
-  source = "https://github.com/skyleague/aws-s3.git?ref=v1.0.0"
+  source = "git::https://github.com/skyleague/aws-s3.git?ref=v1.0.0"
 
   bucket_name_prefix = "${local.config.project_name}-artifacts"
 }
