@@ -55,7 +55,7 @@ module "config_lambda" {
 }
 
 module "lambda" {
-  source = "git@github.com:skyleague/aws-lambda.git?ref=v2.0.1"
+  source = "https://github.com/skyleague/aws-lambda.git?ref=v2.0.1"
 
   for_each = module.config_lambda.lambda_definitions
 

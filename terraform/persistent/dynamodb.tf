@@ -20,7 +20,7 @@ variable "dynamodb" {
 
 module "dynamodb" {
   for_each = var.dynamodb
-  source   = "git@github.com:skyleague/aws-dynamodb.git?ref=v3.0.0"
+  source   = "https://github.com/skyleague/aws-dynamodb.git?ref=v3.0.0"
 
   name      = each.value.name
   hash_key  = each.value.hash_key

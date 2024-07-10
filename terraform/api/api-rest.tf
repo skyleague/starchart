@@ -20,7 +20,7 @@ locals {
 
 
 module "rest_api" {
-  source = "git@github.com:skyleague/aws-rest-api.git?ref=v3.1.0"
+  source = "https://github.com/skyleague/aws-rest-api.git?ref=v3.1.0"
 
   for_each = local.rest_api_inputs
 
