@@ -12,6 +12,9 @@ variable "starchart" {
           arn = string
         })
       })
+      chatbot = optional(object({
+        sns_notication_arn = string
+      }))
     })
     config = any
   })
