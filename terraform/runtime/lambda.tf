@@ -28,14 +28,14 @@ variable "lambda" {
 locals {
   functions_dir              = coalesce(var.lambda.functions_dir, var.directory)
   function_prefix            = coalesce(var.lambda.function_prefix, "${local.config.stack}-")
-  local_artifact_path_prefix = coalesce(var.lambda.local_artifact.path_prefix, "${local.config.repo_root}/.artifacts/${replace(local.functions_dir, "${local.config.repo_root}/src", "")}/")
+  local_artifact_path_prefix = coalesce(var.lambda.local_artifact.path_prefix, "${local.config.repo_root}/.artifacts/${replace(local.functions_dir, local.config.repo_root, "")}/")
 
   handler_file = coalesce(var.lambda.handler_file, "handler.yml")
 }
 
 
 module "config_lambda" {
-  source = "../../modules/config-lambda"
+  source = "../modules/config-lambda"
 
   functions_dir = local.functions_dir
   handler_file  = local.handler_file
@@ -55,7 +55,7 @@ module "config_lambda" {
 }
 
 module "lambda" {
-  source = "git::https://github.com/skyleague/aws-lambda.git?ref=v2.0.1"
+  source = "git::https://github.com/skyleague/aws-lambda.git?ref=v2.2.0"
 
   for_each = module.config_lambda.lambda_definitions
 
@@ -76,6 +76,10 @@ module "lambda" {
     path      = "${local.local_artifact_path_prefix}${each.value.artifact_path}${var.lambda.local_artifact.type == "zip" ? ".zip" : ""}"
     s3_bucket = try(var.lambda.local_artifact.s3_bucket, local.bootstrap.artifacts_bucket.id)
     s3_prefix = var.lambda.local_artifact.s3_prefix
+  }
+
+  tags = {
+    Path = replace(abspath("${var.directory}/${each.value.artifact_path}/${split(".", coalesce(each.value.handler, var.lambda.handler, "index.handler"))[0]}"), local.config.repo_root, "")
   }
 }
 
