@@ -72,7 +72,7 @@ locals {
 
 module "http_api" {
   count  = length(keys(local.http_api_definition)) > 0 && var.http_api != null && !try(var.http_api.defer_deployment, false) ? 1 : 0
-  source = "../../modules/aws-http-api"
+  source = "../modules/aws-http-api"
 
   name = local.http_api_name
 

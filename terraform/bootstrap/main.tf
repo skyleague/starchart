@@ -1,5 +1,5 @@
 module "common" {
-  source = "../../modules/_common"
+  source = "../modules/_common"
 
   config = {
     project_name       = var.starchart.config.project_name
