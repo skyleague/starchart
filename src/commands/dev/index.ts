@@ -94,7 +94,7 @@ export async function handler(argv: ReturnType<typeof builder>['argv']): Promise
             { ...options, fnDir: [], clean: false },
             {
                 fnDirs: [],
-                stacks: !hasDebugArtifact ? [debugDir] : [],
+                stacks: buildRemoteLambdaArtifact ? [debugDir] : [],
                 preBuild,
             },
         )
