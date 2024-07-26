@@ -5,3 +5,7 @@ variable "starchart" {
     config         = any
   })
 }
+
+locals {
+  starchart = var.starchart
+}

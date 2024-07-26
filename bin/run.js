@@ -9,7 +9,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const project = path.join(__dirname, '../tsconfig.json')
 const dev = fs.existsSync(project) && process.env.DEBUG !== 'false'
 
-if (dev && !process.env.NODE_OPTIONS?.includes('--import tsx/esm')) {
+/**
+ * In contrast to most of the SkyLeague packages, we always need to hook in tsx for Therefore.
+ * The reason for this, is that it dynamically loads *.schema.ts files from the project it runs in.
+ */
+if (!process.env.NODE_OPTIONS?.includes('--import tsx/esm')) {
     await new Promise((resolve, reject) => {
         const subprocess = spawn(process.argv[0], [...process.argv.slice(1)], {
             cwd: process.cwd(),
@@ -32,5 +36,5 @@ if (dev && !process.env.NODE_OPTIONS?.includes('--import tsx/esm')) {
     process.exit(0)
 }
 
-const { run } = dev ? await import('../src/index.ts') : await import('../.dist/index.js')
+const { run } = dev ? await import('../src/cli.ts') : await import('../.dist/src/cli.js')
 await run().catch(console.error)

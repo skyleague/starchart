@@ -4,8 +4,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { IAM } from '@aws-sdk/client-iam'
 import { type FunctionConfiguration, Lambda, paginateListFunctions } from '@aws-sdk/client-lambda'
-import {} from '@skyleague/esbuild-lambda'
 import type { Argv } from 'yargs'
+import { StarchartConfiguration } from '../../lib/configuration.js'
 import { rootDirectory } from '../../lib/constants.js'
 import { handler as buildHandler } from '../build/index.js'
 import { builder as deployBuilder, handler as deployHandler } from '../deploy/index.js'
@@ -22,11 +22,6 @@ function sha256Hash(data: Uint8Array) {
 
 export function builder(yargs: Argv) {
     return deployBuilder(yargs)
-        .option('stack', {
-            type: 'array',
-            default: ['*'],
-            string: true,
-        })
         .option('dir', {
             describe: 'environment directory',
             type: 'string',
@@ -51,13 +46,19 @@ export async function handler(argv: ReturnType<typeof builder>['argv']): Promise
     const { deploy, buildDir: _buildDir, artifactDir: _artifactDir, stack } = options
     const artifactDir = path.join(rootDirectory, _artifactDir)
 
+    const configuration = await StarchartConfiguration.load()
+    if ('left' in configuration) {
+        console.error(configuration.left)
+        return
+    }
+
     const stacks = stack.flatMap((t) => t.split(','))
 
     const debugPath = '.debug'
-    const debugDir = path.join(_buildDir, debugPath)
+    const debugDir = path.join(rootDirectory, _buildDir, debugPath)
     const debugArtifact = path.join(artifactDir, _buildDir, `${debugPath}.zip`)
 
-    const debugLambda = path.join(path.join(rootDirectory, debugDir), 'index.ts')
+    const debugLambda = path.join(debugDir, 'index.ts')
 
     const hasDebugArtifact = fs.existsSync(debugArtifact) && false
 
@@ -76,14 +77,14 @@ export async function handler(argv: ReturnType<typeof builder>['argv']): Promise
         !hasDebugArtifact || (fs.existsSync(debugLambda) && fs.readFileSync(debugLambda).toString() !== remoteLambdaContent)
 
     const preBuild = () => {
-        fs.mkdirSync(path.join(rootDirectory, debugDir), { recursive: true })
+        fs.mkdirSync(debugDir, { recursive: true })
 
         fs.writeFileSync(debugLambda, remoteLambdaContent)
     }
 
     if (deploy) {
         await deployHandler(
-            { ...options, clean: false },
+            { ...options, clean: false, configuration: configuration.right },
             {
                 stacks: buildRemoteLambdaArtifact ? [debugDir] : [],
                 preBuild,
@@ -91,10 +92,10 @@ export async function handler(argv: ReturnType<typeof builder>['argv']): Promise
         )
     } else {
         await buildHandler(
-            { ...options, fnDir: [], clean: false },
+            { ...options, fnDir: [], clean: false, configuration: configuration.right },
             {
                 fnDirs: [],
-                stacks: !hasDebugArtifact ? [debugDir] : [],
+                stacks: buildRemoteLambdaArtifact ? [debugDir] : [],
                 preBuild,
             },
         )
@@ -129,6 +130,7 @@ export async function handler(argv: ReturnType<typeof builder>['argv']): Promise
     const codeSha256 = sha256Hash(zipFile)
     await Promise.all(functions.map((f) => patchDebugFunction({ fn: f, lambda, debugZip: zipFile, iam, codeSha256 })))
 
+    console.log(' - Local dev environment started')
     await local(functions)
 }
 

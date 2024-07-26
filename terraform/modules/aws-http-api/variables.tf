@@ -20,6 +20,7 @@ variable "definition" {
 
     parameters = optional(string)
     responses  = optional(string)
+    
     lambda = optional(object({
       function_name = string
     }))
@@ -27,18 +28,26 @@ variable "definition" {
       # Allow additional custom authorizer properties
       # Reference: https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions-authorizer.html
       x-amazon-apigateway-authorizer = optional(string)
+      name                           = string
+      scopes                         = optional(list(string))
+      securityScheme                 = map(any)
+      authorizerType                 = optional(string)
+      identitySource                 = optional(string)
+      resultTtlInSeconds             = optional(number)
 
+      security                       = optional(list(map(list(string))))
+
+      # request
+      header = optional(string)
       lambda = optional(object({
         function_name = string
       }))
-      name                           = string
-      authorizerType                 = optional(string)
-      identitySource                 = optional(string)
-      header                         = optional(string)
-      resultTtlInSeconds             = optional(number)
-      security                       = optional(list(any))
       authorizerPayloadFormatVersion = optional(string)
       enableSimpleResponses          = optional(bool)
+
+      # jwt
+      issuer   = optional(string)
+      audience = optional(list(string))
     }))
   })))
 }

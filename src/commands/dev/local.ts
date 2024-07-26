@@ -21,7 +21,7 @@ const endpoint = memoize(async () => {
 })
 
 const pretty = () =>
-    pinoPretty.default({
+    pinoPretty({
         translateTime: 'SYS:standard',
         ignore: 'pid,hostname',
         messageKey: 'message',

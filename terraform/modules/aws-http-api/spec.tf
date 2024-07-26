@@ -9,29 +9,56 @@ locals {
       ])
     ])) : function_name => "arn:aws:apigateway:${local.region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${local.region}:${local.account_id}:function:${function_name}/invocations"
   }
-  authorizers = flatten([
-    for http_path, path_items in var.definition : flatten([
-      for http_method, path_item in path_items : zipmap(
-        [path_item.authorizer.name],
-        [{
-          type = "apiKey"
-          in   = "header"
-          name = coalesce(try(path_item.authorizer.header, null), "Authorization")
-          "x-amazon-apigateway-authorizer" = merge(
-            {
-              type                           = coalesce(try(path_item.authorizer.authorizerType, null), "request")
-              identitySource                 = coalesce(try(path_item.authorizer.identitySource, null), "method.request.header.${coalesce(try(path_item.authorizer.header, null), "Authorization")}")
-              authorizerResultTtlInSeconds   = coalesce(try(path_item.authorizer.resultTtlInSeconds, null), 0)
-              enableSimpleResponses          = coalesce(try(path_item.authorizer.enableSimpleResponses, null), false)
-              authorizerPayloadFormatVersion = coalesce(try(path_item.authorizer.authorizerPayloadFormatVersion, null), "2.0")
-            },
-            try({ authorizerUri = local.invoke_arns[path_item.authorizer.lambda.function_name] }, {}),
-            try(jsondecode(path_item.authorizer["x-amazon-apigateway-authorizer"]), {})
-          )
-        }],
-      ) if try(path_item.authorizer, null) != null
-    ])
-  ])
+  authorizers = flatten(
+    concat(
+      [
+        for http_path, path_items in var.definition : [
+          for http_method, path_item in path_items :
+          zipmap(
+            [path_item.authorizer.name],
+            [{
+              type = "apiKey"
+              in   = "header"
+              name = coalesce(try(path_item.authorizer.header, null), "Authorization")
+              "x-amazon-apigateway-authorizer" = merge(
+                {
+                  type                           = "request"
+                  identitySource                 = coalesce(try(path_item.authorizer.identitySource, null), "method.request.header.${coalesce(try(path_item.authorizer.header, null), "Authorization")}")
+                  authorizerResultTtlInSeconds   = coalesce(try(path_item.authorizer.resultTtlInSeconds, null), 0)
+                  enableSimpleResponses          = coalesce(try(path_item.authorizer.enableSimpleResponses, null), false)
+                  authorizerPayloadFormatVersion = coalesce(try(path_item.authorizer.authorizerPayloadFormatVersion, null), "2.0")
+                },
+                { authorizerUri = local.invoke_arns[path_item.authorizer.lambda.function_name] },
+                try(jsondecode(path_item.authorizer["x-amazon-apigateway-authorizer"]), {})
+              )
+            }]
+          ) if try(path_item.authorizer, null) != null && coalesce(try(path_item.authorizer.authorizerType, null), "request") == "request"
+        ]
+      ],
+      [
+        for http_path, path_items in var.definition : [
+          for http_method, path_item in path_items : zipmap(
+            [path_item.authorizer.name],
+            [{
+              type = "oauth2"
+              "x-amazon-apigateway-authorizer" = merge(
+                {
+                  type                         = "jwt"
+                  identitySource               = coalesce(try(path_item.authorizer.identitySource, null), "method.request.header.${coalesce(try(path_item.authorizer.header, null), "Authorization")}")
+                  authorizerResultTtlInSeconds = coalesce(try(path_item.authorizer.resultTtlInSeconds, null), 0)
+                  jwtConfiguration = {
+                    issuer   = path_item.authorizer.issuer
+                    audience = path_item.authorizer.audience
+                  }
+                },
+                try(jsondecode(path_item.authorizer["x-amazon-apigateway-authorizer"]), {})
+              )
+            }]
+          ) if try(path_item.authorizer.authorizerType, null) == "jwt"
+        ]
+      ]
+    )
+  )
   parsed_extensions = jsondecode(var.extensions)
   components = merge(try(local.parsed_extensions.components, {}), {
     securitySchemes = merge(
@@ -59,10 +86,10 @@ locals {
       for http_method, path_item in path_items : http_method => concat(
         try(path_item.authorizer, null) != null ? [merge([
           for authorizer in local.authorizers : {
-            for name, value in authorizer : name => [] if path_item.authorizer.name == name
+            for name, value in authorizer : name => try(path_item.authorizer.scopes, []) if path_item.authorizer.name == name
           }
         ]...)] : [],
-        try(path_item.security, []),
+        coalesce(try(path_item.security, null), []),
       )
     }
   }
@@ -98,3 +125,6 @@ locals {
   })
 }
 
+output "definition" {
+  value = local.compiled_definition
+}

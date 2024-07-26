@@ -1,46 +1,48 @@
 variable "lambda" {
-  type = object({
-    runtime = string
+  type    = any
+  default = {}
+}
 
-    functions_dir   = optional(string)
-    function_prefix = optional(string)
+module "lambda_settings" {
+  source = "./lambda-settings"
 
-    handler_file = optional(string)
+  runtime     = try(local.starchart.stack.lambda.runtime, var.lambda.runtime)
+  memory_size = try(local.starchart.stack.lambda.memorySize, var.lambda.memory_size, 1024)
+  timeout     = try(local.starchart.stack.lambda.timeout, var.lambda.timeout, 20)
+  handler     = try(local.starchart.stack.lambda.handler, var.lambda.handler, null)
+  vpc_config  = try(local.starchart.stack.lambda.vpcConfig, var.lambda.vpc_config, null)
 
-    memory_size = optional(number)
-    timeout     = optional(number)
-    handler     = optional(string)
-    environment = optional(map(string), {})
 
-    inline_policies = optional(map(object({ json = string })), {})
+  environment = merge(
+    try(local.starchart.stack.lambda.environment, {}),
+    try(var.lambda.environment, {})
+  )
+  inline_policies = merge(
+    try(local.starchart.stack.lambda.inlinePolicies, {}),
+    try(var.lambda.inline_policies, {})
+  )
 
-    vpc_config = optional(any)
+  functions_dir   = try(var.lambda.functions_dir, local.starchart.stack.path)
+  function_prefix = try(var.lambda.function_prefix, "${local.config.stack}-")
+  handler_file    = try(var.lambda.handler_file, null)
 
-    local_artifact = optional(object({
-      type        = optional(string, "zip")
-      path_prefix = optional(string)
-      s3_bucket   = optional(string)
-      s3_prefix   = optional(string)
-    }))
-  })
+
+  local_artifact = try(local.starchart.stack.lambda.localArtifact, var.lambda.local_artifact, {})
 }
 
 locals {
-  functions_dir              = coalesce(var.lambda.functions_dir, var.directory)
-  function_prefix            = coalesce(var.lambda.function_prefix, "${local.config.stack}-")
-  local_artifact_path_prefix = coalesce(var.lambda.local_artifact.path_prefix, "${local.config.repo_root}/.artifacts/${replace(local.functions_dir, local.config.repo_root, "")}/")
-
-  handler_file = coalesce(var.lambda.handler_file, "handler.yml")
+  # convert this to a proper setting
+  local_artifact_path_prefix = coalesce(module.lambda_settings.local_artifact.path_prefix, "${local.config.repo_root}/.artifacts/${replace(module.lambda_settings.functions_dir, local.config.repo_root, "")}")
 }
 
 
 module "config_lambda" {
   source = "../modules/config-lambda"
 
-  functions_dir = local.functions_dir
-  handler_file  = local.handler_file
+  functions_dir = "${local.starchart.config.repo_root}/${module.lambda_settings.functions_dir}"
+  handler_file  = module.lambda_settings.handler_file
 
-  function_prefix    = local.function_prefix
+  function_prefix    = module.lambda_settings.function_prefix
   template_variables = var.template_variables
 
   appconfig_application_arn = local.bootstrap.appconfig.application.arn
@@ -61,25 +63,25 @@ module "lambda" {
 
   function_name = each.value.function_name
 
-  runtime     = coalesce(each.value.runtime, var.lambda.runtime)
-  vpc_config  = try(each.value.vpc_config, var.lambda.vpc_config, null)
-  handler     = coalesce(each.value.handler, var.lambda.handler, "index.handler")
-  memory_size = coalesce(each.value.memory_size, var.lambda.memory_size, 1024)
-  timeout     = coalesce(each.value.timeout, var.lambda.timeout, 20)
+  runtime     = coalesce(each.value.runtime, module.lambda_settings.runtime)
+  memory_size = coalesce(each.value.memory_size, module.lambda_settings.memory_size)
+  timeout     = coalesce(each.value.timeout, module.lambda_settings.timeout)
+  handler     = coalesce(each.value.handler, module.lambda_settings.handler)
+  vpc_config  = try(each.value.vpc_config, module.lambda_settings.vpc_config, null)
 
-  environment = merge(var.lambda.environment, each.value.environment)
+  environment     = merge(module.lambda_settings.environment, each.value.environment)
+  inline_policies = merge(module.lambda_settings.inline_policies, each.value.inline_policies)
 
-  inline_policies = merge(var.lambda.inline_policies, each.value.inline_policies)
-
-  local_artifact = var.lambda.local_artifact == null ? null : {
-    type      = var.lambda.local_artifact.type
-    path      = "${local.local_artifact_path_prefix}${each.value.artifact_path}${var.lambda.local_artifact.type == "zip" ? ".zip" : ""}"
-    s3_bucket = try(var.lambda.local_artifact.s3_bucket, local.bootstrap.artifacts_bucket.id)
-    s3_prefix = var.lambda.local_artifact.s3_prefix
+  # when we support s3 artifacts, we need to change the default logic
+  local_artifact = module.lambda_settings.local_artifact == null ? null : {
+    type      = module.lambda_settings.local_artifact.type
+    path      = "${local.local_artifact_path_prefix}${each.value.artifact_path}${module.lambda_settings.local_artifact.type == "zip" ? ".zip" : ""}"
+    s3_bucket = try(module.lambda_settings.local_artifact.s3_bucket, local.bootstrap.artifacts_bucket.id)
+    s3_prefix = module.lambda_settings.local_artifact.s3_prefix
   }
 
   tags = {
-    Path = replace(abspath("${var.directory}/${each.value.artifact_path}/${split(".", coalesce(each.value.handler, var.lambda.handler, "index.handler"))[0]}"), local.config.repo_root, "")
+    Path = "/${module.lambda_settings.functions_dir}${each.value.artifact_path}/${split(".", coalesce(each.value.handler, module.lambda_settings.handler, "index.handler"))[0]}"
   }
 }
 
@@ -95,4 +97,3 @@ output "lambdas" {
 # output "config_lambda" {
 #   value = module.config_lambda
 # }
-

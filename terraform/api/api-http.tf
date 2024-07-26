@@ -1,7 +1,7 @@
 
 locals {
   _http_api_stacks = {
-    for stack, subs in var.starchart.stacks : stack => jsondecode(subs.runtime.deferred_http_api_input) if try(subs.runtime.deferred_http_api_input, null) != null
+    for stack, subs in local.starchart.stacks : stack => jsondecode(subs.runtime.deferred_http_api_input) if try(subs.runtime.deferred_http_api_input, null) != null
   }
 
   http_api_inputs = {

@@ -1,4 +1,4 @@
-import { run } from '../src/index.js'
+import { run } from '../src/cli.js'
 
 import { expect, it } from 'vitest'
 

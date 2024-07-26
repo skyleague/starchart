@@ -1,10 +1,11 @@
 module "config_sqs" {
   source = "../modules/config-sqs"
 
-  functions_dir = local.functions_dir
+  functions_dir = "${local.starchart.config.repo_root}/${module.lambda_settings.functions_dir}"
+  handler_file  = module.lambda_settings.handler_file
 
-  eventbridge_kms_key_id = var.starchart.bootstrap.eventing_kms_key_arn
-  persistent_queues      = var.starchart.persistent.sqs
+  eventbridge_kms_key_id = local.starchart.bootstrap.eventing_kms_key_arn
+  persistent_queues      = local.starchart.persistent.sqs
 }
 
 module "sqs" {
@@ -18,7 +19,7 @@ module "sqs" {
   # Settings with custom defaults
   visibility_timeout_seconds = try(each.value.visibility_timeout_seconds, null)
   message_retention_seconds  = try(each.value.message_retention_seconds, null)
-  kms_master_key_id          = try(each.value.kms_master_key_id, var.starchart.bootstrap.eventing_kms_key_arn)
+  kms_master_key_id          = try(each.value.kms_master_key_id, local.starchart.bootstrap.eventing_kms_key_arn)
 
   # Settings with no custom defaults
   max_message_size                  = try(each.value.max_message_size, null)
@@ -38,7 +39,7 @@ resource "aws_cloudwatch_metric_alarm" "sqs_dlq" {
     for key, value in module.sqs : key => value if value.dlq != null
   }
 
-  alarm_name  = "${ each.value.dlq.name_prefix}-messages-available"
+  alarm_name  = "${each.value.dlq.name_prefix}-messages-available"
   namespace   = "AWS/SQS"
   metric_name = "ApproximateNumberOfMessagesVisible"
   dimensions = {
@@ -51,9 +52,10 @@ resource "aws_cloudwatch_metric_alarm" "sqs_dlq" {
   statistic           = "Minimum"
   comparison_operator = "GreaterThanThreshold"
   threshold           = 0
+  treat_missing_data  = "notBreaching"
 
-  alarm_actions = try([var.starchart.bootstrap.chatbot.sns_notication_arn], [])
-  ok_actions = try([var.starchart.bootstrap.chatbot.sns_notication_arn], [])
+  alarm_actions = try([local.starchart.bootstrap.chatbot.sns_notication_arn], [])
+  ok_actions    = try([local.starchart.bootstrap.chatbot.sns_notication_arn], [])
 }
 
 module "sqs_trigger" {

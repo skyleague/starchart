@@ -4,9 +4,10 @@
  */
 /* eslint-disable */
 
-import type { Events } from './events/index.type.js'
-import type { Publishes } from './publishes/index.type.js'
-import type { Resources } from './resources/index.type.js'
+import type { Events } from './handler/events/index.type.js'
+import type { Publishes } from './handler/publishes/index.type.js'
+import type { Resources } from './handler/resources/index.type.js'
+import type { SecurityScheme } from './openapi.type.js'
 import StarChartHandlerSchema from './schemas/star-chart-handler.schema.json' with { type: 'json' }
 
 import { Ajv } from 'ajv'
@@ -18,6 +19,8 @@ import type { DefinedError } from 'ajv'
 export interface StarChartHandler {
     /**
      * The name of the handler function to invoke.
+     *
+     * @default 'index.handler'
      */
     handler?: string | undefined
     /**
@@ -93,11 +96,26 @@ export interface StarChartHandler {
     events?: Events | undefined
     publishes?: Publishes | undefined
     resources?: Resources | undefined
-    inlinePolicies?: string[] | undefined
-    runtime?: 'nodejs16.x' | 'nodejs18.x' | 'nodejs20.x' | 'python3.8' | 'python3.9' | 'python3.10' | undefined
+    inlinePolicies?: unknown[] | undefined
+    runtime?: 'nodejs18.x' | 'nodejs20.x' | 'python3.8' | 'python3.9' | 'python3.10' | undefined
     memorySize?: number | undefined
     timeout?: number | undefined
     vpcConfig?: string | undefined
+    /**
+     * Define that this lambda defines an authorizer.
+     */
+    authorizer?:
+        | {
+              /**
+               * The name of the authorizer to use for the route.
+               */
+              name: string
+              /**
+               * The security schemes to use for the route.
+               */
+              securityScheme?: SecurityScheme | undefined
+          }
+        | undefined
 }
 
 export const StarChartHandler = {
