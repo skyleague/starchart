@@ -38,23 +38,28 @@ export async function handler(_argv: ReturnType<typeof builder>['argv']): Promis
                     if ('eventbridge' in publishes) {
                         constants.eventbridge ??= {}
                         constants.eventbridge[publishes.eventbridge.eventBusId] =
-                            `STARCHART_EVENTBRIDGE_${publishes.eventbridge.eventBusId.replace(/[^a-zA-Z0-9]+/g, '_').toUpperCase()}`
+                            `STARCHART_EVENTBRIDGE_${publishes.eventbridge.eventBusId
+                                .replace(/[^a-zA-Z0-9]+/g, '_')
+                                .toUpperCase()}`
                     } else if ('sqs' in publishes) {
                         constants.sqs ??= {}
-                        constants.sqs[publishes.sqs.queueId] =
-                            `STARCHART_SQS_${publishes.sqs.queueId.replace(/[^a-zA-Z0-9]+/g, '_').toUpperCase()}_QUEUE_URL`
+                        constants.sqs[publishes.sqs.queueId] = `STARCHART_SQS_${publishes.sqs.queueId
+                            .replace(/[^a-zA-Z0-9]+/g, '_')
+                            .toUpperCase()}_QUEUE_URL`
                     }
                 }
 
                 for (const resource of eitherHandler.right.resources ?? []) {
                     if ('dynamodb' in resource) {
                         constants.dynamodb ??= {}
-                        constants.dynamodb[resource.dynamodb.tableId] =
-                            `STARCHART_${resource.dynamodb.tableId.replace(/[^a-zA-Z0-9]+/g, '_').toUpperCase()}_TABLE_NAME`
+                        constants.dynamodb[resource.dynamodb.tableId] = `STARCHART_DYNAMODB_${resource.dynamodb.tableId
+                            .replace(/[^a-zA-Z0-9]+/g, '_')
+                            .toUpperCase()}_TABLE_NAME`
                     } else if ('s3' in resource) {
                         constants.s3 ??= {}
-                        constants.s3[resource.s3.bucketId] =
-                            `STARCHART_${resource.s3.bucketId.replace(/[^a-zA-Z0-9]+/g, '_').toUpperCase()}_BUCKET_NAME`
+                        constants.s3[resource.s3.bucketId] = `STARCHART_S3_${resource.s3.bucketId
+                            .replace(/[^a-zA-Z0-9]+/g, '_')
+                            .toUpperCase()}_BUCKET_NAME`
                     }
 
                     // @todo add secrets and parameters
@@ -67,14 +72,9 @@ export async function handler(_argv: ReturnType<typeof builder>['argv']): Promis
                     .write(`export const ${camelcase(handlerName)} = `)
                     .inlineBlock(() => {
                         for (const [key, value] of Object.entries(constants)) {
-                            writer
-                                .write(`${key}: `)
-                                .inlineBlock(() => {
-                                    for (const [subKey, subValue] of Object.entries(value)) {
-                                        writer.writeLine(`${subKey}: process.env.${subValue},`)
-                                    }
-                                })
-                                .write(',\n')
+                            for (const [subKey, subValue] of Object.entries(value)) {
+                                writer.writeLine(`${camelcase(`${key}_${subKey}`)}: process.env.${subValue},`)
+                            }
                         }
                     })
                     .newLine()

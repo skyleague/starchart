@@ -1,5 +1,5 @@
 module "config_sqs" {
-  source = "../../modules/config-sqs"
+  source = "../modules/config-sqs"
 
   functions_dir = local.functions_dir
 
@@ -67,7 +67,7 @@ module "sqs_trigger" {
 }
 
 module "eventbridge_sqs" {
-  source = "../../modules/eventbridge-sqs"
+  source = "../modules/eventbridge-sqs"
 
   eventbridge_to_sqs = module.config_lambda.eventbridge_to_sqs
   sqs                = module.sqs

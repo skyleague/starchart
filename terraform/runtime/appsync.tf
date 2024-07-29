@@ -57,7 +57,7 @@
 # }
 
 # module "appsync_runtime_unit" {
-#   source = "../../modules/main.starchart.appsync_runtime"
+#   source = "../modules/main.starchart.appsync_runtime"
 
 #   for_each = module.starchart_config_appsync.datasource
 
@@ -72,7 +72,7 @@
 # }
 
 # module "appsync_runtime_pipeline" {
-#   source = "../../modules/main.starchart.appsync_runtime"
+#   source = "../modules/main.starchart.appsync_runtime"
 
 #   for_each = module.starchart_config_appsync.datasource
 

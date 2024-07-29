@@ -20,7 +20,7 @@ locals {
 
 
 module "http_api" {
-  source = "../../modules/aws-http-api"
+  source = "../modules/aws-http-api"
 
   for_each = local.http_api_inputs
 
