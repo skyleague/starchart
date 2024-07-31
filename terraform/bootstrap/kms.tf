@@ -1,4 +1,3 @@
-
 variable "eventing_kms_key_arn" {
   type        = string
   nullable    = false
@@ -35,6 +34,7 @@ data "aws_iam_policy_document" "eventing_kms_key" {
     principals {
       type = "Service"
       identifiers = [
+        "cloudwatch.amazonaws.com",
         "events.amazonaws.com",
         "sqs.amazonaws.com",
         "sns.amazonaws.com"
@@ -91,6 +91,10 @@ resource "aws_kms_alias" "eventing_kms_key" {
   target_key_id = aws_kms_key.eventing_kms_key[0].key_id
 }
 
+locals {
+  eventing_kms_key_arn = length(var.eventing_kms_key_arn) == 0 ? aws_kms_key.eventing_kms_key[0].arn : var.eventing_kms_key_arn
+}
+
 output "eventing_kms_key_arn" {
-  value = length(var.eventing_kms_key_arn) == 0 ? aws_kms_key.eventing_kms_key[0].arn : var.eventing_kms_key_arn
+  value = local.eventing_kms_key_arn
 }

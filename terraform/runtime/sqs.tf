@@ -33,6 +33,29 @@ module "sqs" {
   dlq_settings  = try(each.value.dlq, null)
 }
 
+resource "aws_cloudwatch_metric_alarm" "sqs_dlq" {
+  for_each = {
+    for key, value in module.sqs : key => value if value.dlq != null
+  }
+
+  alarm_name  = "${ each.value.dlq.name_prefix}-messages-available"
+  namespace   = "AWS/SQS"
+  metric_name = "ApproximateNumberOfMessagesVisible"
+  dimensions = {
+    QueueName = each.value.dlq.name
+  }
+
+  period              = 60
+  datapoints_to_alarm = 1
+  evaluation_periods  = 1
+  statistic           = "Minimum"
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = 0
+
+  alarm_actions = try([var.starchart.bootstrap.chatbot.sns_notication_arn], [])
+  ok_actions = try([var.starchart.bootstrap.chatbot.sns_notication_arn], [])
+}
+
 module "sqs_trigger" {
   source = "git::https://github.com/skyleague/aws-lambda-sqs-trigger.git?ref=v2.0.0"
 
