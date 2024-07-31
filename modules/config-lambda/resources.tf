@@ -56,7 +56,8 @@ locals {
         for resource in try(definition.resources, []) : {
           bucketId       = resource.s3.bucketId
           actions        = resource.s3.actions
-          actions_string = join(",", sort(toset(resource.s3.actions)))
+          iamActions     = try(flatten([resource.dynamodb.iamActions]), [])
+          actions_string = join(",", sort(toset(flatten([resource.s3.actions, try(resource.s3.iamActions, [])]))))
         } if try(resource.s3, null) != null
       ]
       dynamodb = [
@@ -172,6 +173,7 @@ data "aws_iam_policy_document" "s3_access" {
         contains(statement.value, "delete") ? [
           "s3:DeleteObject",
         ] : [],
+        statement.value.iamActions,
       ))
 
       resources = flatten([

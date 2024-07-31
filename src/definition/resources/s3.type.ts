@@ -19,5 +19,9 @@ export interface S3Resource {
          */
         bucketId: string
         actions: [S3ResourceActionsArray, ...S3ResourceActionsArray[]]
+        /**
+         * Custom IAM actions to add to the role.
+         */
+        iamActions?: string[] | undefined
     }
 }
