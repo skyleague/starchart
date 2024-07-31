@@ -608,6 +608,13 @@
                 "enum": ["read", "write", "delete", "get", "list"]
               },
               "minItems": 1
+            },
+            "iamActions": {
+              "type": "array",
+              "description": "Custom IAM actions to add to the role.",
+              "items": {
+                "type": "string"
+              }
             }
           },
           "required": ["actions", "bucketId"],
