@@ -56,7 +56,7 @@ locals {
         for resource in try(definition.resources, []) : {
           bucketId       = resource.s3.bucketId
           actions        = resource.s3.actions
-          iamActions     = try(flatten([resource.dynamodb.iamActions]), [])
+          iam_actions    = try(flatten([resource.s3.iamActions]), [])
           actions_string = join(",", sort(toset(flatten([resource.s3.actions, try(resource.s3.iamActions, [])]))))
         } if try(resource.s3, null) != null
       ]
@@ -64,7 +64,7 @@ locals {
         for resource in try(definition.resources, []) : {
           tableId        = resource.dynamodb.tableId
           actions        = resource.dynamodb.actions
-          iamActions     = try(flatten([resource.dynamodb.iamActions]), [])
+          iam_actions    = try(flatten([resource.dynamodb.iamActions]), [])
           actions_string = join(",", sort(toset(flatten([resource.dynamodb.actions, try(resource.dynamodb.iamActions, [])]))))
         } if try(resource.dynamodb, null) != null
       ]
@@ -153,7 +153,7 @@ data "aws_iam_policy_document" "s3_access" {
     for_each = merge([
       for bucket in each.value : zipmap(
         [bucket.actions_string],
-        [bucket.actions]
+        [{ actions = bucket.actions, iam_actions = bucket.iam_actions }]
       )
     ]...)
 
@@ -161,19 +161,19 @@ data "aws_iam_policy_document" "s3_access" {
       effect = "Allow"
 
       actions = toset(concat(
-        anytrue([for action in ["read", "get"] : contains(statement.value, action)]) ? [
+        anytrue([for action in ["read", "get"] : contains(statement.value.actions, action)]) ? [
           "s3:GetObject",
         ] : [],
-        anytrue([for action in ["read", "list"] : contains(statement.value, action)]) ? [
+        anytrue([for action in ["read", "list"] : contains(statement.value.actions, action)]) ? [
           "s3:ListBucket",
         ] : [],
-        contains(statement.value, "write") ? [
+        contains(statement.value.actions, "write") ? [
           "s3:PutObject",
         ] : [],
-        contains(statement.value, "delete") ? [
+        contains(statement.value.actions, "delete") ? [
           "s3:DeleteObject",
         ] : [],
-        statement.value.iamActions,
+        statement.value.iam_actions,
       ))
 
       resources = flatten([
@@ -193,7 +193,7 @@ data "aws_iam_policy_document" "dynamodb_access" {
     for_each = merge([
       for table in each.value : zipmap(
         [table.actions_string],
-        [{ actions = table.actions, iamActions = table.iamActions }]
+        [{ actions = table.actions, iam_actions = table.iam_actions }]
       )
     ]...)
 
@@ -219,7 +219,7 @@ data "aws_iam_policy_document" "dynamodb_access" {
         contains(statement.value.actions, "scan") ? [
           "dynamodb:Scan",
         ] : [],
-        statement.value.iamActions,
+        statement.value.iam_actions,
       ))
 
       resources = flatten([
