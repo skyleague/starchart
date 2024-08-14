@@ -56,6 +56,10 @@ export async function handler(_argv: ReturnType<typeof builder>['argv']): Promis
                     // @todo add secrets and parameters
                 }
 
+                for (const key in eitherHandler.right.environment ?? {}) {
+                    constants[camelcase(key)] = key
+                }
+
                 const handlerName = path.basename(handler)
 
                 const writer = createWriter()
