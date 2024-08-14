@@ -63,18 +63,18 @@ export async function handler(_argv: ReturnType<typeof builder>['argv']): Promis
                     .write(`export const ${camelcase(handlerName)} = `)
                     .inlineBlock(() => {
                         for (const [key, value] of Object.entries(constants)) {
-                            writer
-                                .write(`${key}: `)
-                                .inlineBlock(() => {
-                                    if (typeof value === 'string') {
-                                        writer.write(`process.env.${value}`)
-                                    } else {
+                            if (typeof value === 'string') {
+                                writer.write(`${key}: process.env.${value},`)
+                            } else {
+                                writer
+                                    .write(`${key}: `)
+                                    .inlineBlock(() => {
                                         for (const [subKey, subValue] of Object.entries(value)) {
                                             writer.writeLine(`${subKey}: process.env.${subValue},`)
                                         }
-                                    }
-                                })
-                                .write(',\n')
+                                    })
+                                    .write(',\n')
+                            }
                         }
                     })
                     .newLine()
