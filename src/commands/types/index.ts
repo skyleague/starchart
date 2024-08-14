@@ -66,8 +66,12 @@ export async function handler(_argv: ReturnType<typeof builder>['argv']): Promis
                             writer
                                 .write(`${key}: `)
                                 .inlineBlock(() => {
-                                    for (const [subKey, subValue] of Object.entries(value)) {
-                                        writer.writeLine(`${subKey}: process.env.${subValue},`)
+                                    if (typeof value === 'string') {
+                                        writer.write(`process.env.${value}`)
+                                    } else {
+                                        for (const [subKey, subValue] of Object.entries(value)) {
+                                            writer.writeLine(`${subKey}: process.env.${subValue},`)
+                                        }
                                     }
                                 })
                                 .write(',\n')
