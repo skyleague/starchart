@@ -36,21 +36,21 @@ export async function handler(_argv: ReturnType<typeof builder>['argv']): Promis
 
                 for (const publishes of eitherHandler.right.publishes ?? []) {
                     if ('eventbridge' in publishes) {
-                        constants[camelcase(`eventbridge_${publishes.eventbridge.eventBusId}`)] =
-                            `STARCHART_EVENTBRIDGE_${publishes.eventbridge.eventBusId.replace(/[^a-zA-Z0-9]+/g, '_').toUpperCase()}`
+                        const _eventBusId = publishes.eventbridge.eventBusId.replace(/[^a-zA-Z0-9]+/g, '_')
+                        constants[camelcase(`eventbridge_${_eventBusId}`)] = `STARCHART_EVENTBRIDGE_${_eventBusId.toUpperCase()}`
                     } else if ('sqs' in publishes) {
-                        constants[camelcase(`sqs_${publishes.sqs.queueId}`)] =
-                            `STARCHART_SQS_${publishes.sqs.queueId.replace(/[^a-zA-Z0-9]+/g, '_').toUpperCase()}_QUEUE_URL`
+                        const _queueId = publishes.sqs.queueId.replace(/[^a-zA-Z0-9]+/g, '_')
+                        constants[camelcase(`sqs_${_queueId}`)] = `STARCHART_SQS_${_queueId.toUpperCase()}_QUEUE_URL`
                     }
                 }
 
                 for (const resource of eitherHandler.right.resources ?? []) {
                     if ('dynamodb' in resource) {
-                        constants[camelcase(`dynamodb_${resource.dynamodb.tableId}`)] =
-                            `STARCHART_${resource.dynamodb.tableId.replace(/[^a-zA-Z0-9]+/g, '_').toUpperCase()}_TABLE_NAME`
+                        const _tableId = resource.dynamodb.tableId.replace(/[^a-zA-Z0-9]+/g, '_')
+                        constants[camelcase(`dynamodb_${_tableId}`)] = `STARCHART_${_tableId.toUpperCase()}_TABLE_NAME`
                     } else if ('s3' in resource) {
-                        constants[camelcase(`s3_${resource.s3.bucketId}`)] =
-                            `STARCHART_${resource.s3.bucketId.replace(/[^a-zA-Z0-9]+/g, '_').toUpperCase()}_BUCKET_NAME`
+                        const _bucketId = resource.s3.bucketId.replace(/[^a-zA-Z0-9]+/g, '_')
+                        constants[camelcase(`s3_${_bucketId}`)] = `STARCHART_${_bucketId.toUpperCase()}_BUCKET_NAME`
                     }
 
                     // @todo add secrets and parameters
