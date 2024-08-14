@@ -32,28 +32,24 @@ export async function handler(_argv: ReturnType<typeof builder>['argv']): Promis
             const eitherHandler = StarChartHandler.parse(handlerContent)
             if ('right' in eitherHandler) {
                 console.log(`Handler ${handler} is valid`)
-                const constants: Record<string, Record<string, string>> = {}
+                const constants: Record<string, string> = {}
 
                 for (const publishes of eitherHandler.right.publishes ?? []) {
                     if ('eventbridge' in publishes) {
-                        constants.eventbridge ??= {}
-                        constants.eventbridge[publishes.eventbridge.eventBusId] =
+                        constants[camelcase(`eventbridge_${publishes.eventbridge.eventBusId}`)] =
                             `STARCHART_EVENTBRIDGE_${publishes.eventbridge.eventBusId.replace(/[^a-zA-Z0-9]+/g, '_').toUpperCase()}`
                     } else if ('sqs' in publishes) {
-                        constants.sqs ??= {}
-                        constants.sqs[publishes.sqs.queueId] =
+                        constants[camelcase(`sqs_${publishes.sqs.queueId}`)] =
                             `STARCHART_SQS_${publishes.sqs.queueId.replace(/[^a-zA-Z0-9]+/g, '_').toUpperCase()}_QUEUE_URL`
                     }
                 }
 
                 for (const resource of eitherHandler.right.resources ?? []) {
                     if ('dynamodb' in resource) {
-                        constants.dynamodb ??= {}
-                        constants.dynamodb[resource.dynamodb.tableId] =
+                        constants[camelcase(`dynamodb_${resource.dynamodb.tableId}`)] =
                             `STARCHART_${resource.dynamodb.tableId.replace(/[^a-zA-Z0-9]+/g, '_').toUpperCase()}_TABLE_NAME`
                     } else if ('s3' in resource) {
-                        constants.s3 ??= {}
-                        constants.s3[resource.s3.bucketId] =
+                        constants[camelcase(`s3_${resource.s3.bucketId}`)] =
                             `STARCHART_${resource.s3.bucketId.replace(/[^a-zA-Z0-9]+/g, '_').toUpperCase()}_BUCKET_NAME`
                     }
 
