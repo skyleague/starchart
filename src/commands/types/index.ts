@@ -47,10 +47,10 @@ export async function handler(_argv: ReturnType<typeof builder>['argv']): Promis
                 for (const resource of eitherHandler.right.resources ?? []) {
                     if ('dynamodb' in resource) {
                         const _tableId = resource.dynamodb.tableId.replace(/[^a-zA-Z0-9]+/g, '_')
-                        constants[camelcase(`dynamodb_${_tableId}`)] = `STARCHART_${_tableId.toUpperCase()}_TABLE_NAME`
+                        constants[camelcase(`dynamodb_${_tableId}`)] = `STARCHART_DYNAMODB_${_tableId.toUpperCase()}_TABLE_NAME`
                     } else if ('s3' in resource) {
                         const _bucketId = resource.s3.bucketId.replace(/[^a-zA-Z0-9]+/g, '_')
-                        constants[camelcase(`s3_${_bucketId}`)] = `STARCHART_${_bucketId.toUpperCase()}_BUCKET_NAME`
+                        constants[camelcase(`s3_${_bucketId}`)] = `STARCHART_S3_${_bucketId.toUpperCase()}_BUCKET_NAME`
                     }
 
                     // @todo add secrets and parameters
