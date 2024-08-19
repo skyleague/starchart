@@ -2,27 +2,36 @@ import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { parallelLimit } from '@skyleague/axioms'
 import { globby } from 'globby'
 import type { Argv } from 'yargs'
 import * as packageJson from '../../../package.json' with { type: 'json' }
-import { builder as buildBuilder } from '../build/index.js'
-const { version } = packageJson.default ?? packageJson
-import { parallelLimit } from '@skyleague/axioms'
 
+const { version: _version } = packageJson.default ?? packageJson
 const _pLimit = parallelLimit(os.cpus().length * 4 + 1)
 
 export function builder(yargs: Argv) {
-    return buildBuilder(yargs).option('dir', {
-        describe: 'terraform directory',
-        type: 'string',
-        default: '.',
-        example: 'terraform',
-        demandOption: true,
-    })
+    return yargs
+        .option('dir', {
+            describe: 'terraform directory',
+            type: 'string',
+            default: '.',
+            example: 'terraform',
+            demandOption: true,
+        })
+        .option('target', {
+            type: 'array',
+            default: ['*'],
+            string: true,
+        })
+        .option('targetVersion', {
+            type: 'string',
+            default: _version,
+        })
 }
 
 export async function handler(argv: ReturnType<typeof builder>['argv']): Promise<void> {
-    const { target, dir } = await argv
+    const { target, dir, targetVersion } = await argv
     const targets = target.flatMap((t) => t.split(','))
     const cwd = path.join(process.cwd(), dir)
 
@@ -39,7 +48,7 @@ export async function handler(argv: ReturnType<typeof builder>['argv']): Promise
 
     const updatedFiles: string[] = []
     for (const [file, contents] of Object.entries(original)) {
-        const updated = replaceSourceRefVersion(contents)
+        const updated = replaceSourceRefVersion(contents, targetVersion)
         if (updated !== contents) {
             console.log(`Updating starchart version in ${file}`)
             await fs.promises.writeFile(file, updated)
@@ -70,10 +79,10 @@ export default {
     handler,
 }
 
-function replaceSourceRefVersion(contents: string) {
+function replaceSourceRefVersion(contents: string, targetVersion: string) {
     return contents.replace(
         /(?<source>source\s*=\s*".*github\.com\/skyleague\/starchart.*)\?ref=(?<version>.*)/g,
-        `$<source>?ref=v${version}"`,
+        `$<source>?ref=v${targetVersion}"`,
     )
 }
 
