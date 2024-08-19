@@ -27,6 +27,7 @@
     "check:coverage": "vitest run --coverage=true",
     "check:types": "tsc -p tsconfig.json",
     "package": "rm -rf .dist && npm run build",
+    "prepack": "cp package.json .dist/package.json",
     "test": "vitest run"
   },
   "dependencies": {
