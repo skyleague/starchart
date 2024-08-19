@@ -1,5 +1,6 @@
 {
   "name": "@skyleague/starchart",
+  "version": "1.0.0",
   "license": "MIT",
   "type": "module",
   "repository": {
@@ -29,6 +30,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@skyleague/axioms": "^4.5.2",
     "@skyleague/esbuild-lambda": "^5.2.0",
     "camelcase": "^8.0.0",
     "find-root": "^1.1.0",
