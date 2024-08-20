@@ -91,6 +91,6 @@ output "deferred_rest_api_input" {
   }) : null
 }
 
-# output "rest_api" {
-#   value = try(module.rest_api[0], null)
-# }
+output "rest_api" {
+  value = try(module.rest_api[0], null)
+}
