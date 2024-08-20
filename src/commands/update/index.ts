@@ -56,6 +56,11 @@ export async function handler(argv: ReturnType<typeof builder>['argv']): Promise
         }
     }
 
+    if (updatedFiles.length === 0) {
+        console.log('No files were updated')
+        return
+    }
+
     spawnSync('git', ['stage', '--patch', ...updatedFiles], { stdio: 'inherit', cwd })
     const diffFiles = spawnSync('git', ['diff', '--name-only', ...updatedFiles], { stdio: 'pipe', cwd })
         .stdout.toString()
