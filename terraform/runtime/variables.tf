@@ -9,9 +9,3 @@ variable "inline_policies" {
   description = "The inline policies to be attached to the functions."
   default     = {}
 }
-
-variable "directory" {
-  type        = string
-  description = "The directory from which it loads the starchart configuration."
-}
-

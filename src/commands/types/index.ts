@@ -5,7 +5,7 @@ import camelcase from 'camelcase'
 import { globby } from 'globby'
 import yaml from 'js-yaml'
 import type { Argv } from 'yargs'
-import { StarChartHandler } from '../../definition/definition.type.js'
+import { StarChartHandler } from '../../definition/handler.type.js'
 import { rootDirectory } from '../../lib/constants.js'
 import { createWriter } from '../../lib/writer.js'
 
@@ -36,14 +36,12 @@ export async function handler(_argv: ReturnType<typeof builder>['argv']): Promis
 
                 for (const publishes of eitherHandler.right.publishes ?? []) {
                     if ('eventbridge' in publishes) {
-                        constants.eventbridge ??= {}
-                        constants.eventbridge[publishes.eventbridge.eventBusId] =
+                        constants[camelcase(`eventbridge_${publishes.eventbridge.eventBusId}`)] =
                             `STARCHART_EVENTBRIDGE_${publishes.eventbridge.eventBusId
                                 .replace(/[^a-zA-Z0-9]+/g, '_')
                                 .toUpperCase()}`
                     } else if ('sqs' in publishes) {
-                        constants.sqs ??= {}
-                        constants.sqs[publishes.sqs.queueId] = `STARCHART_SQS_${publishes.sqs.queueId
+                        constants[camelcase(`sqs_${publishes.sqs.queueId}`)] = `STARCHART_SQS_${publishes.sqs.queueId
                             .replace(/[^a-zA-Z0-9]+/g, '_')
                             .toUpperCase()}_QUEUE_URL`
                     }
@@ -61,10 +59,6 @@ export async function handler(_argv: ReturnType<typeof builder>['argv']): Promis
                     // @todo add secrets and parameters
                 }
 
-                for (const key in eitherHandler.right.environment ?? {}) {
-                    constants[camelcase(key)] = key
-                }
-
                 const handlerName = path.basename(handler)
 
                 const writer = createWriter()
@@ -72,9 +66,14 @@ export async function handler(_argv: ReturnType<typeof builder>['argv']): Promis
                     .write(`export const ${camelcase(handlerName)} = `)
                     .inlineBlock(() => {
                         for (const [key, value] of Object.entries(constants)) {
-                            for (const [subKey, subValue] of Object.entries(value)) {
-                                writer.writeLine(`${camelcase(`${key}_${subKey}`)}: process.env.${subValue},`)
-                            }
+                            writer
+                                .write(`${key}: `)
+                                .inlineBlock(() => {
+                                    for (const [subKey, subValue] of Object.entries(value)) {
+                                        writer.writeLine(`${subKey}: process.env.${subValue},`)
+                                    }
+                                })
+                                .write(',\n')
                         }
                     })
                     .newLine()

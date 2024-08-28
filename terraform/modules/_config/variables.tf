@@ -62,12 +62,6 @@ variable "stack" {
   }
 }
 
-variable "domain" {
-  type        = string
-  description = "Domain of the project, used for tagging and naming resources"
-  nullable    = false
-}
-
 variable "repo_root" {
   type        = string
   description = "Root of the repository"

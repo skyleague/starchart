@@ -1,0 +1,489 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Stack",
+  "type": "object",
+  "properties": {
+    "httpApi": {
+      "$ref": "#/$defs/Apigateway"
+    },
+    "restApi": {
+      "$ref": "#/$defs/Apigateway"
+    },
+    "lambda": {
+      "type": "object",
+      "description": "The configuration for the lambda runtime.",
+      "default": {},
+      "properties": {
+        "runtime": {
+          "enum": ["nodejs18.x", "nodejs20.x", "python3.8", "python3.9", "python3.10"]
+        },
+        "memorySize": {
+          "type": "number"
+        },
+        "timeout": {
+          "type": "number"
+        },
+        "handler": {
+          "type": "string",
+          "description": "The name of the handler function to invoke.",
+          "default": "index.handler"
+        },
+        "vpcConfig": {
+          "type": "string"
+        },
+        "environment": {
+          "type": "object",
+          "description": "The environment variables to set for the handler.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "inlinePolicies": {
+          "type": "array",
+          "items": {}
+        },
+        "functionsDir": {
+          "type": "string",
+          "description": "The directory containing the functions to be deployed."
+        },
+        "functionPrefix": {
+          "type": "string",
+          "description": "The prefix to be used when naming the functions."
+        },
+        "handlerFile": {
+          "type": "string",
+          "description": "The name of the file containing the handler definition.",
+          "default": "handler.yml"
+        }
+      },
+      "additionalProperties": true
+    },
+    "openapi": {
+      "type": "object",
+      "description": "The configuration for the OpenAPI.",
+      "properties": {
+        "servers": {
+          "$ref": "#/$defs/Servers"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "Apigateway": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the API Gateway, defaults to the stack name."
+        },
+        "deferDeployment": {
+          "type": "boolean",
+          "description": "Defer deployment of the API to a later stage.",
+          "default": false
+        },
+        "disableExecuteApiEndpoint": {
+          "type": "boolean",
+          "description": "Disable the execute-api endpoint.",
+          "default": true
+        },
+        "authorizers": {
+          "type": "object",
+          "description": "Map of authorizers for the API.",
+          "default": {},
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/HttpApiRequestAuthorizer"
+              },
+              {
+                "$ref": "#/$defs/JwtAuthorizer"
+              }
+            ]
+          }
+        },
+        "defaultAuthorizer": {
+          "type": "object",
+          "description": "The default authorizer for the API.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The default authorizer for the API."
+            },
+            "scopes": {
+              "type": "array",
+              "description": "The default scopes for the API.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["name"],
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "HttpApiRequestAuthorizer": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/RequestAuthorizer"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "enableSimpleResponses": {
+              "type": "boolean",
+              "description": "Enable simple responses for the authorizer.",
+              "default": true
+            },
+            "payloadFormatVersion": {
+              "type": "string",
+              "description": "The payload format version for the authorizer.",
+              "default": "2.0"
+            }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "RequestAuthorizer": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "description": "The type of the authorizer.",
+              "const": "request"
+            },
+            "ttlInSeconds": {
+              "type": "number",
+              "description": "The TTL for the authorizer.",
+              "default": 60
+            },
+            "identitySource": {
+              "type": "array",
+              "description": "The identity source for the authorizer.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "securityScheme": {
+              "description": "The security requirements to use for the route.",
+              "$ref": "#/$defs/SecurityScheme"
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": true
+        },
+        {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "functionId": {
+                  "type": "string",
+                  "description": "The function ID for the authorizer."
+                }
+              },
+              "additionalProperties": true
+            },
+            {
+              "type": "object",
+              "properties": {
+                "functionName": {
+                  "type": "string",
+                  "description": "The function arn for the authorizer."
+                }
+              },
+              "additionalProperties": true
+            }
+          ]
+        }
+      ]
+    },
+    "SecurityScheme": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ApiKeySecurityScheme"
+        },
+        {
+          "$ref": "#/$defs/HttpSecurityScheme"
+        },
+        {
+          "$ref": "#/$defs/Oauth2SecurityScheme"
+        },
+        {
+          "$ref": "#/$defs/OpenIdConnectSecurityScheme"
+        }
+      ]
+    },
+    "ApiKeySecurityScheme": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "The type of the security scheme.",
+          "const": "apiKey"
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the security scheme."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the API key."
+        },
+        "in": {
+          "description": "The location of the API key.",
+          "enum": ["query", "header", "cookie"]
+        }
+      },
+      "required": ["in", "name", "type"],
+      "additionalProperties": true
+    },
+    "HttpSecurityScheme": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "The type of the security scheme.",
+          "const": "http"
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the security scheme."
+        },
+        "scheme": {
+          "type": "string",
+          "description": "The name of the HTTP Authorization scheme to be used."
+        },
+        "bearerFormat": {
+          "type": "string",
+          "description": "A hint to the client to identify how the bearer token is formatted."
+        }
+      },
+      "required": ["scheme", "type"],
+      "additionalProperties": true
+    },
+    "Oauth2SecurityScheme": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "The type of the security scheme.",
+          "const": "oauth2"
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the security scheme."
+        },
+        "flows": {
+          "type": "object",
+          "description": "The available flows for the OAuth2 security scheme.",
+          "properties": {
+            "implicit": {
+              "type": "object",
+              "properties": {
+                "authorizationUrl": {
+                  "type": "string",
+                  "description": "The authorization URL to be used for this flow."
+                },
+                "refreshUrl": {
+                  "type": "string",
+                  "description": "The URL to be used for obtaining refresh tokens."
+                },
+                "scopes": {
+                  "type": "object",
+                  "description": "The available scopes for the OAuth2 security scheme.",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": ["authorizationUrl", "scopes"],
+              "additionalProperties": true
+            },
+            "password": {
+              "type": "object",
+              "properties": {
+                "tokenUrl": {
+                  "type": "string",
+                  "description": "The token URL to be used for this flow."
+                },
+                "refreshUrl": {
+                  "type": "string",
+                  "description": "The URL to be used for obtaining refresh tokens."
+                },
+                "scopes": {
+                  "type": "object",
+                  "description": "The available scopes for the OAuth2 security scheme.",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": ["scopes", "tokenUrl"],
+              "additionalProperties": true
+            },
+            "clientCredentials": {
+              "type": "object",
+              "properties": {
+                "tokenUrl": {
+                  "type": "string",
+                  "description": "The token URL to be used for this flow."
+                },
+                "refreshUrl": {
+                  "type": "string",
+                  "description": "The URL to be used for obtaining refresh tokens."
+                },
+                "scopes": {
+                  "type": "object",
+                  "description": "The available scopes for the OAuth2 security scheme.",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": ["scopes", "tokenUrl"],
+              "additionalProperties": true
+            },
+            "authorizationCode": {
+              "type": "object",
+              "properties": {
+                "authorizationUrl": {
+                  "type": "string",
+                  "description": "The authorization URL to be used for this flow."
+                },
+                "tokenUrl": {
+                  "type": "string",
+                  "description": "The token URL to be used for this flow."
+                },
+                "refreshUrl": {
+                  "type": "string",
+                  "description": "The URL to be used for obtaining refresh tokens."
+                },
+                "scopes": {
+                  "type": "object",
+                  "description": "The available scopes for the OAuth2 security scheme.",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": ["authorizationUrl", "scopes", "tokenUrl"],
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "required": ["type"],
+      "additionalProperties": true
+    },
+    "OpenIdConnectSecurityScheme": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "The type of the security scheme.",
+          "const": "openIdConnect"
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the security scheme."
+        },
+        "openIdConnectUrl": {
+          "type": "string",
+          "description": "The OpenID Connect URL to discover OAuth2 configuration values."
+        }
+      },
+      "required": ["openIdConnectUrl", "type"],
+      "additionalProperties": true
+    },
+    "JwtAuthorizer": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "description": "The type of the authorizer.",
+              "const": "jwt"
+            },
+            "identitySource": {
+              "type": "string",
+              "description": "The identity source for the authorizer."
+            },
+            "ttlInSeconds": {
+              "type": "number",
+              "description": "The TTL for the authorizer.",
+              "default": 60
+            },
+            "issuer": {
+              "type": "string",
+              "description": "The issuer for the authorizer."
+            },
+            "audience": {
+              "type": "array",
+              "description": "The audience for the authorizer.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "securityScheme": {
+              "description": "The security requirements to use for the route.",
+              "$ref": "#/$defs/SecurityScheme"
+            }
+          },
+          "required": ["audience", "issuer", "type"],
+          "additionalProperties": true
+        }
+      ]
+    },
+    "Servers": {
+      "type": "array",
+      "description": "The servers to use for the route.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "The description of the server."
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL of the server."
+          },
+          "variables": {
+            "type": "object",
+            "description": "The variables to pass to the server.",
+            "additionalProperties": {
+              "$ref": "#/$defs/ServerVariable"
+            }
+          }
+        },
+        "required": ["url"],
+        "additionalProperties": true
+      }
+    },
+    "ServerVariable": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "type": "string",
+          "description": "The default value to use for substitution."
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the server variable."
+        },
+        "enum": {
+          "type": "array",
+          "description": "An enumeration of string values to be used if the substitution options are from a limited set.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["default"],
+      "additionalProperties": true
+    }
+  }
+}

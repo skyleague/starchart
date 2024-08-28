@@ -1,8 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { esbuildLambda, listLambdaHandlers, zipHandlers } from '@skyleague/esbuild-lambda'
-import { globby } from 'globby'
 import type { Argv } from 'yargs'
+import { StarchartConfiguration } from '../../lib/configuration.js'
 import { rootDirectory } from '../../lib/constants.js'
 
 export function builder(yargs: Argv) {
@@ -17,7 +17,7 @@ export function builder(yargs: Argv) {
             type: 'string',
             default: '.artifacts',
         })
-        .option('target', {
+        .option('stack', {
             type: 'array',
             default: ['*'],
             string: true,
@@ -26,10 +26,6 @@ export function builder(yargs: Argv) {
             type: 'boolean',
             default: true,
         })
-        .option('dot', {
-            type: 'boolean',
-            default: false,
-        })
 }
 
 export type BuildOptions = {
@@ -37,18 +33,25 @@ export type BuildOptions = {
     stacks?: string[]
     preBuild?: () => Promise<void> | void
     postBuild?: () => Promise<void> | void
+    configuration?: StarchartConfiguration
 }
 
 export async function handler(argv: ReturnType<typeof builder>['argv'], options: BuildOptions = {}): Promise<void> {
-    const { buildDir: _buildDir, artifactDir: _artifactDir, target, clean, dot } = await argv
-    const { fnDirs = ['src/**/functions'], preBuild, postBuild } = options
+    const { buildDir: _buildDir, artifactDir: _artifactDir, stack, clean } = await argv
+    const { preBuild, postBuild, configuration: _configuration } = options
     const buildDir = path.join(rootDirectory, _buildDir)
     const artifactDir = path.join(rootDirectory, _artifactDir)
 
-    const targets = target.flatMap((t) => t.split(','))
+    const configuration = _configuration !== undefined ? { right: _configuration } : await StarchartConfiguration.load()
+    if ('left' in configuration) {
+        console.error(configuration.left)
+        return
+    }
+
+    const targetedStacks = stack.flatMap((t) => t.split(','))
 
     if (clean) {
-        if (targets.includes('*')) {
+        if (targetedStacks.includes('*')) {
             fs.rmSync(artifactDir, { recursive: true, force: true })
         }
         fs.rmSync(buildDir, { recursive: true, force: true })
@@ -57,13 +60,14 @@ export async function handler(argv: ReturnType<typeof builder>['argv'], options:
 
     await preBuild?.()
 
-    const stacks = await globby(fnDirs, { cwd: rootDirectory, onlyDirectories: true, dot })
+    const stacks = configuration.right?.stacks.map((s) => path.dirname(s.target)) ?? []
+
     const handlers = (
         await Promise.all(
             [
                 ...(options.stacks ?? []),
-                ...stacks.filter((handler) => targets.includes('*') || targets.some((t) => handler.includes(t))),
-            ].flatMap(async (fnDir) => listLambdaHandlers(path.join(rootDirectory, fnDir))),
+                ...stacks.filter((handler) => targetedStacks.includes('*') || targetedStacks.some((t) => handler.includes(t))),
+            ].flatMap(async (fnDir) => listLambdaHandlers(fnDir)),
         )
     ).flat()
 

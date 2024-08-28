@@ -15,7 +15,7 @@ data "aws_iam_policy_document" "eventing_kms_key" {
 
     principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::${var.starchart.aws_account_id}:root"]
+      identifiers = ["arn:aws:iam::${local.starchart.aws_account_id}:root"]
     }
   }
 
@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "eventing_kms_key" {
     condition {
       test     = "StringEquals"
       variable = "aws:SourceAccount"
-      values   = [var.starchart.aws_account_id]
+      values   = [local.starchart.aws_account_id]
     }
   }
 

@@ -14,10 +14,6 @@ output "stack" {
   value = var.stack
 }
 
-output "domain" {
-  value = var.domain
-}
-
 output "repo_root" {
   value = var.repo_root
 }
