@@ -67,6 +67,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "node-standards": {
-    "extends": "yargs-cli"
+    "extends": "yargs-cli",
+    "ignorePatterns": ["bin/run.js"]
   }
 }
