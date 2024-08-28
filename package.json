@@ -1,6 +1,6 @@
 {
   "name": "@skyleague/starchart",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "license": "MIT",
   "type": "module",
   "repository": {
@@ -31,17 +31,25 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@skyleague/axioms": "^4.5.2",
-    "@skyleague/esbuild-lambda": "^5.2.0",
+    "@aws-sdk/client-iam": "^3.614.0",
+    "@aws-sdk/client-lambda": "^3.614.0",
+    "@skyleague/esbuild-lambda": "^5.3.2",
+    "@skyleague/event-horizon": "^9.0.0",
+    "aws-iot-device-sdk-v2": "^1.20.0",
     "camelcase": "^8.0.0",
     "find-root": "^1.1.0",
     "globby": "^14.0.2",
     "js-yaml": "^4.1.0",
+    "pino-pretty": "^11.2.1",
+    "tsx": "^4.16.2",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "@skyleague/node-standards": "^7.2.0",
-    "@skyleague/therefore": "^5.9.1",
+    "@aws-sdk/client-iot": "^3.614.0",
+    "@aws-sdk/credential-providers": "^3.614.0",
+    "@skyleague/node-standards": "^7.3.1",
+    "@skyleague/therefore": "^5.9.2",
+    "@types/aws-lambda": "^8.10.141",
     "@types/find-root": "^1.1.4",
     "@types/js-yaml": "^4.0.9",
     "@types/yargs": "^17.0.32",

@@ -22,38 +22,67 @@ export function builder(yargs: Argv) {
             default: ['*'],
             string: true,
         })
+        .option('clean', {
+            type: 'boolean',
+            default: true,
+        })
+        .option('dot', {
+            type: 'boolean',
+            default: false,
+        })
 }
 
-export async function handler(argv: ReturnType<typeof builder>['argv']): Promise<void> {
-    const { buildDir: _buildDir, artifactDir: _artifactDir, target } = await argv
+export type BuildOptions = {
+    fnDirs?: string[]
+    stacks?: string[]
+    preBuild?: () => Promise<void> | void
+    postBuild?: () => Promise<void> | void
+}
+
+export async function handler(argv: ReturnType<typeof builder>['argv'], options: BuildOptions = {}): Promise<void> {
+    const { buildDir: _buildDir, artifactDir: _artifactDir, target, clean, dot } = await argv
+    const { fnDirs = ['src/**/functions'], preBuild, postBuild } = options
     const buildDir = path.join(rootDirectory, _buildDir)
     const artifactDir = path.join(rootDirectory, _artifactDir)
 
     const targets = target.flatMap((t) => t.split(','))
 
-    if (targets.includes('*')) {
-        await fs.promises.rm(artifactDir, { recursive: true }).catch(() => void {})
+    if (clean) {
+        if (targets.includes('*')) {
+            fs.rmSync(artifactDir, { recursive: true, force: true })
+        }
+        fs.rmSync(buildDir, { recursive: true, force: true })
     }
-    await fs.promises.mkdir(artifactDir).catch(() => void {})
+    fs.mkdirSync(artifactDir, { recursive: true })
 
-    const stacks = await globby(['src/**/functions'], { cwd: rootDirectory, onlyDirectories: true })
-    const handlers = (await Promise.all(stacks.flatMap(async (fnDir) => listLambdaHandlers(path.join(rootDirectory, fnDir)))))
-        .flat()
-        .filter((handler) => targets.includes('*') || targets.some((t) => handler.includes(t)))
+    await preBuild?.()
 
-    const outbase = path.join(rootDirectory, 'src')
+    const stacks = await globby(fnDirs, { cwd: rootDirectory, onlyDirectories: true, dot })
+    const handlers = (
+        await Promise.all(
+            [
+                ...(options.stacks ?? []),
+                ...stacks.filter((handler) => targets.includes('*') || targets.some((t) => handler.includes(t))),
+            ].flatMap(async (fnDir) => listLambdaHandlers(path.join(rootDirectory, fnDir))),
+        )
+    ).flat()
+
+    const outbase = rootDirectory
 
     await esbuildLambda(rootDirectory, {
         esbuild: {
             absWorkingDir: rootDirectory,
             tsconfig: path.join(rootDirectory, 'tsconfig.dist.json'),
-            outbase,
+            outbase: rootDirectory,
         },
         root: rootDirectory,
+        modulesRoot: rootDirectory,
         entryPoints: handlers.map((fnDir) => path.join(fnDir, 'index.ts')),
         outdir: () => buildDir,
-        forceBundle: () => true,
+        forceBundle: ({ packageName }) => packageName !== 'aws-crt',
     })
+
+    await postBuild?.()
 
     await zipHandlers(handlers, {
         outbase,

@@ -59,7 +59,7 @@ variable "starchart" {
 }
 
 module "common" {
-  source = "../../modules/_common"
+  source = "../modules/_common"
 
   config       = var.starchart.config
   default_tags = var.starchart.default_tags

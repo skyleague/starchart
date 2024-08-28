@@ -36,11 +36,16 @@ export async function handler(_argv: ReturnType<typeof builder>['argv']): Promis
 
                 for (const publishes of eitherHandler.right.publishes ?? []) {
                     if ('eventbridge' in publishes) {
-                        const _eventBusId = publishes.eventbridge.eventBusId.replace(/[^a-zA-Z0-9]+/g, '_')
-                        constants[camelcase(`eventbridge_${_eventBusId}`)] = `STARCHART_EVENTBRIDGE_${_eventBusId.toUpperCase()}`
+                        constants.eventbridge ??= {}
+                        constants.eventbridge[publishes.eventbridge.eventBusId] =
+                            `STARCHART_EVENTBRIDGE_${publishes.eventbridge.eventBusId
+                                .replace(/[^a-zA-Z0-9]+/g, '_')
+                                .toUpperCase()}`
                     } else if ('sqs' in publishes) {
-                        const _queueId = publishes.sqs.queueId.replace(/[^a-zA-Z0-9]+/g, '_')
-                        constants[camelcase(`sqs_${_queueId}`)] = `STARCHART_SQS_${_queueId.toUpperCase()}_QUEUE_URL`
+                        constants.sqs ??= {}
+                        constants.sqs[publishes.sqs.queueId] = `STARCHART_SQS_${publishes.sqs.queueId
+                            .replace(/[^a-zA-Z0-9]+/g, '_')
+                            .toUpperCase()}_QUEUE_URL`
                     }
                 }
 
@@ -67,17 +72,8 @@ export async function handler(_argv: ReturnType<typeof builder>['argv']): Promis
                     .write(`export const ${camelcase(handlerName)} = `)
                     .inlineBlock(() => {
                         for (const [key, value] of Object.entries(constants)) {
-                            if (typeof value === 'string') {
-                                writer.write(`${key}: process.env.${value},\n`)
-                            } else {
-                                writer
-                                    .write(`${key}: `)
-                                    .inlineBlock(() => {
-                                        for (const [subKey, subValue] of Object.entries(value)) {
-                                            writer.writeLine(`${subKey}: process.env.${subValue},`)
-                                        }
-                                    })
-                                    .write(',\n')
+                            for (const [subKey, subValue] of Object.entries(value)) {
+                                writer.writeLine(`${camelcase(`${key}_${subKey}`)}: process.env.${subValue},`)
                             }
                         }
                     })
