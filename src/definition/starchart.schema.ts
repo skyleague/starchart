@@ -6,6 +6,8 @@ export const starchart = $object({
         identifier: $string().describe('The identifier of the project.'),
     }),
 
+    params: $record($record($string())).optional().describe('The parameters to be used when rendering the handler definition.'),
+
     stacks: $record(
         $object({
             path: $string().describe('The path to the stack.'),

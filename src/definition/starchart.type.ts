@@ -21,6 +21,18 @@ export interface Starchart {
         identifier: string
     }
     /**
+     * The parameters to be used when rendering the handler definition.
+     */
+    params?:
+        | {
+              [k: string]:
+                  | {
+                        [k: string]: string | undefined
+                    }
+                  | undefined
+          }
+        | undefined
+    /**
      * The stacks to deploy.
      */
     stacks: {

@@ -18,6 +18,16 @@
       "required": ["identifier", "name"],
       "additionalProperties": true
     },
+    "params": {
+      "type": "object",
+      "description": "The parameters to be used when rendering the handler definition.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      }
+    },
     "stacks": {
       "type": "object",
       "description": "The stacks to deploy.",
