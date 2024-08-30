@@ -67,7 +67,7 @@ export async function handler(_argv: ReturnType<typeof builder>['argv']): Promis
                     .inlineBlock(() => {
                         for (const [key, value] of Object.entries(constants)) {
                             if (typeof value === 'string') {
-                                writer.writeLine(`${key}: process.env.${value},\n`)
+                                writer.writeLine(`${key}: process.env.${value},`)
                             } else {
                                 writer
                                     .write(`${key}: `)
