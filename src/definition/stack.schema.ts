@@ -79,6 +79,8 @@ export const stack = $object({
         .default({})
         .describe('The configuration for the lambda runtime.'),
 
+    params: $record($record($string())).optional().describe('The parameters to be used when rendering the handler definition.'),
+
     openapi: $object({
         servers: servers.optional(),
         // disable these for now, as the values can all be inferred from the starchart definition
