@@ -11,6 +11,47 @@ variable "extensions" {
   type        = string
   default     = "{}"
 }
+
+variable "request_authorizers" {
+  type = map(object({
+    identity_source = optional(string, "$request.header.Authorization")
+    function_name = string
+    
+    ttl_in_seconds = optional(number, 0)
+
+    enable_simple_responses = optional(bool, false)
+    payload_format_version  = optional(string, "2.0")
+
+    security_scheme = optional(map(any), {})
+
+    # Allow additional custom authorizer properties
+    # Reference: https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions-authorizer.html
+    x-amazon-apigateway-authorizer = optional(map(any), {})
+  }))
+  description = "Map of authorizers for the API"
+  default     = {}
+  nullable    = false
+}
+
+variable "jwt_authorizers" {
+  type = map(object({
+    identity_source = optional(string, "$request.header.Authorization")
+
+    ttl_in_seconds  = optional(number, 0)
+
+    issuer   = string
+    audience = optional(list(string))
+
+    security_scheme = optional(map(any), {})
+    # Allow additional custom authorizer properties
+    # Reference: https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions-authorizer.html
+    x-amazon-apigateway-authorizer = optional(map(any), {})
+  }))
+  description = "Map of authorizers for the API"
+  default     = {}
+  nullable    = false
+}
+
 variable "definition" {
   description = "Definition of the OpenAPI paths (see the README for examples)"
   type = map(map(object({
@@ -25,29 +66,9 @@ variable "definition" {
       function_name = string
     }))
     authorizer = optional(object({
-      # Allow additional custom authorizer properties
-      # Reference: https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions-authorizer.html
-      x-amazon-apigateway-authorizer = optional(string)
       name                           = string
       scopes                         = optional(list(string))
-      securityScheme                 = map(any)
-      authorizerType                 = optional(string)
-      identitySource                 = optional(string)
-      resultTtlInSeconds             = optional(number)
-
       security                       = optional(list(map(list(string))))
-
-      # request
-      header = optional(string)
-      lambda = optional(object({
-        function_name = string
-      }))
-      authorizerPayloadFormatVersion = optional(string)
-      enableSimpleResponses          = optional(bool)
-
-      # jwt
-      issuer   = optional(string)
-      audience = optional(list(string))
     }))
   })))
 }

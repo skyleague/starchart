@@ -2,68 +2,60 @@ locals {
   invoke_arns = {
     for function_name in toset(flatten([
       for http_path, path_items in var.definition : flatten([
-        for http_method, path_item in path_items : concat(
-          try([path_item.lambda.function_name], []),
-          try([path_item.authorizer.lambda.function_name], []),
-        )
+        for http_method, path_item in path_items : try([path_item.lambda.function_name], [])
       ])
     ])) : function_name => "arn:aws:apigateway:${local.region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${local.region}:${local.account_id}:function:${function_name}/invocations"
   }
-  authorizers = flatten(
-    concat(
-      [
-        for http_path, path_items in var.definition : [
-          for http_method, path_item in path_items :
-          zipmap(
-            [path_item.authorizer.name],
-            [{
-              type = "apiKey"
-              in   = "header"
-              name = coalesce(try(path_item.authorizer.header, null), "Authorization")
-              "x-amazon-apigateway-authorizer" = merge(
-                {
-                  type                           = "request"
-                  identitySource                 = coalesce(try(path_item.authorizer.identitySource, null), "method.request.header.${coalesce(try(path_item.authorizer.header, null), "Authorization")}")
-                  authorizerResultTtlInSeconds   = coalesce(try(path_item.authorizer.resultTtlInSeconds, null), 0)
-                  enableSimpleResponses          = coalesce(try(path_item.authorizer.enableSimpleResponses, null), false)
-                  authorizerPayloadFormatVersion = coalesce(try(path_item.authorizer.authorizerPayloadFormatVersion, null), "2.0")
-                },
-                { authorizerUri = local.invoke_arns[path_item.authorizer.lambda.function_name] },
-                try(jsondecode(path_item.authorizer["x-amazon-apigateway-authorizer"]), {})
-              )
-            }]
-          ) if try(path_item.authorizer, null) != null && coalesce(try(path_item.authorizer.authorizerType, null), "request") == "request"
-        ]
-      ],
-      [
-        for http_path, path_items in var.definition : [
-          for http_method, path_item in path_items : zipmap(
-            [path_item.authorizer.name],
-            [{
-              type = "oauth2"
-              "x-amazon-apigateway-authorizer" = merge(
-                {
-                  type                         = "jwt"
-                  identitySource               = coalesce(try(path_item.authorizer.identitySource, null), "method.request.header.${coalesce(try(path_item.authorizer.header, null), "Authorization")}")
-                  authorizerResultTtlInSeconds = coalesce(try(path_item.authorizer.resultTtlInSeconds, null), 0)
-                  jwtConfiguration = {
-                    issuer   = path_item.authorizer.issuer
-                    audience = path_item.authorizer.audience
-                  }
-                },
-                try(jsondecode(path_item.authorizer["x-amazon-apigateway-authorizer"]), {})
-              )
-            }]
-          ) if try(path_item.authorizer.authorizerType, null) == "jwt"
-        ]
-      ]
-    )
+  authorizers = merge(
+    {
+      for name, authorizer in var.request_authorizers : name => merge({
+        type = "apiKey"
+        in   = "header"
+        name = coalesce(try(authorizer.authorizer.header, null), "Authorization")
+      },
+      authorizer.security_scheme,
+      {
+        "x-amazon-apigateway-authorizer" = merge(
+          {
+            type                           = "request"
+            identitySource                 = authorizer.identity_source
+            authorizerUri                  = "arn:aws:apigateway:${local.region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${local.region}:${local.account_id}:function:${authorizer.function_name}/invocations"
+            authorizerResultTtlInSeconds   = authorizer.ttl_in_seconds
+            enableSimpleResponses          = authorizer.enable_simple_responses
+            authorizerPayloadFormatVersion = authorizer.payload_format_version
+          }
+        )
+      },
+      authorizer.x-amazon-apigateway-authorizer
+      )
+    },
+    {
+      for name, authorizer in var.jwt_authorizers : name => merge({
+        type = "oauth2"
+      },
+      authorizer.security_scheme,
+      {
+        "x-amazon-apigateway-authorizer" = merge(
+          {
+            type                         = "jwt"
+            identitySource               = authorizer.identity_source
+            authorizerResultTtlInSeconds = authorizer.ttl_in_seconds
+            jwtConfiguration = {
+              issuer   = authorizer.issuer
+              audience = authorizer.audience
+            }
+          }
+        )
+      },
+      authorizer.x-amazon-apigateway-authorizer
+      )
+    }
   )
   parsed_extensions = jsondecode(var.extensions)
   components = merge(try(local.parsed_extensions.components, {}), {
     securitySchemes = merge(
       try(local.parsed_extensions.components.securitySchemes, {}),
-      reverse(local.authorizers)...
+      local.authorizers
     )
   })
   parameters = {
@@ -81,24 +73,13 @@ locals {
       )
     }
   }
-  security = {
-    for http_path, path_items in var.definition : http_path => {
-      for http_method, path_item in path_items : http_method => concat(
-        try(path_item.authorizer, null) != null ? [merge([
-          for authorizer in local.authorizers : {
-            for name, value in authorizer : name => try(path_item.authorizer.scopes, []) if path_item.authorizer.name == name
-          }
-        ]...)] : [],
-        coalesce(try(path_item.security, null), []),
-      )
-    }
-  }
   compiled_definition = merge(local.parsed_extensions, {
     openapi = try(local.parsed_extensions.openapi, "3.0.1")
     info = try(local.parsed_extensions.info, {
       title   = var.name
       version = "1.0"
     })
+    # security = local.security
     paths = merge({
       for http_path, path_items in var.definition : http_path => {
         for http_method, path_item in path_items : http_method == "any" ? "x-amazon-apigateway-any-method" : lower(http_method) => { for k, v in {
@@ -110,7 +91,9 @@ locals {
           } : {})
           parameters = length(try(local.parameters[http_path][http_method], [])) > 0 ? local.parameters[http_path][http_method] : null
           responses  = try(jsondecode(path_item.responses), null)
-          security   = length(try(local.security[http_path][http_method], [])) > 0 ? local.security[http_path][http_method] : null
+          security   = try(path_item.authorizer, null) != null ? [{
+            "${path_item.authorizer.name}" = path_item.authorizer.scopes
+          }] : null
         } : k => v if v != null }
       }
       }, {

@@ -18,19 +18,20 @@ module "http_api_settings" {
       for name, authorizer in try(var.http_api.authorizers, local.starchart.stack.httpApi.authorizers, {}) : name => {
         type            = authorizer.type
         identity_source = try(authorizer.identitySource, null)
+
         ttl_in_seconds  = try(authorizer.ttlInSeconds, null)
         function_id     = try(authorizer.functionId, null)
+        function_name     = try(authorizer.functionName, null)
+
         security_scheme = try(authorizer.securityScheme, null)
       } if try(authorizer.type, "request") == "request"
       },
       module.config_lambda.request_authorizers
       ) : name => merge(authorizer, {
-        lambda = {
-          function_name = coalesce(
-            try(authorizer.function_name, null),
-            module.config_lambda.lambda_definitions[authorizer.function_id].function_name
-          )
-        }
+        function_name = coalesce(
+          try(authorizer.function_name, null),
+          module.config_lambda.lambda_definitions[authorizer.function_id].function_name
+        )
     })
   }
   jwt_authorizers = {
@@ -38,8 +39,10 @@ module "http_api_settings" {
       type            = authorizer.type
       identity_source = try(authorizer.identitySource, null)
       ttl_in_seconds  = try(authorizer.ttlInSeconds, null)
+
       issuer          = try(authorizer.issuer, null)
       audience        = try(authorizer.audience, null)
+      
       security_scheme = try(authorizer.securityScheme, null)
     } if try(authorizer.type, null) == "jwt"
   }
@@ -61,15 +64,11 @@ locals {
           function_name = path_item.function_name
         }
 
-        authorizer = try(path_item.authorizer, null) == null ? null : merge({
-            name   = try(var.http_api.authorizers[path_item.authorizer.name].name, "${local.config.stack}-${path_item.authorizer.name}")
-            scopes = try(path_item.authorizer.scopes, null)
-          },
-          # these should not be defined here
-          lookup(module.http_api_settings[0].request_authorizers, path_item.authorizer.name, {}),
-          lookup(module.http_api_settings[0].jwt_authorizers, path_item.authorizer.name, {}),
-        )
-
+        authorizer = try(path_item.authorizer, null) == null ? null : {
+          name   = try(var.http_api.authorizers[path_item.authorizer.name].name, path_item.authorizer.name)
+          scopes = try(path_item.authorizer.scopes, null)
+        }
+        
         security = try(path_item.security, null)
       }
     })
@@ -86,18 +85,23 @@ module "http_api" {
   account_id = local.starchart.aws_account_id
   definition = local.http_api_definition
 
+  request_authorizers = module.http_api_settings[0].request_authorizers
+  jwt_authorizers = module.http_api_settings[0].jwt_authorizers
+
   disable_execute_api_endpoint = module.http_api_settings[0].disable_execute_api_endpoint
   depends_on                   = [module.lambda]
 }
 
 output "deferred_http_api_input" {
-  sensitive = true
   value = try(module.http_api_settings[0].defer_deployment, false) ? jsonencode({
     name = module.http_api_settings[0].name
 
     region     = local.starchart.aws_region
     account_id = local.starchart.aws_account_id
     definition = local.http_api_definition
+
+    request_authorizers = module.http_api_settings[0].request_authorizers
+    jwt_authorizers = module.http_api_settings[0].jwt_authorizers
 
     disable_execute_api_endpoint = module.http_api_settings[0].disable_execute_api_endpoint
   }) : null
