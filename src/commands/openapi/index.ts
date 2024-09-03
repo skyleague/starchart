@@ -14,7 +14,7 @@ export function builder(yargs: Argv) {
         .option('cwd', {
             type: 'string',
             default: rootDirectory,
-            coerce: (cwd) => path.join(process.cwd(), cwd),
+            coerce: (cwd) => path.resolve(process.cwd(), cwd),
         })
 }
 
