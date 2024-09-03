@@ -29,7 +29,7 @@ export async function openapi({ configuration, cwd }: { configuration: Starchart
 
                 const handlerSecuritySchemes = whenRights(stackHandlers, (xs) => ({
                     right: xs
-                        .filter((x) => 'request' in x.symbol && x.configuration.handler.authorizer?.securityScheme !== undefined)
+                        .filter((x) => x.configuration.handler.authorizer?.securityScheme !== undefined)
                         .map((x) => {
                             const authorizer = x.configuration.handler.authorizer
                             const securitySchemes =
@@ -38,7 +38,10 @@ export async function openapi({ configuration, cwd }: { configuration: Starchart
                                           [authorizer.name]: authorizer.securityScheme ?? {},
                                       }
                                     : undefined
-                            const definition = x.symbol.request as RequestAuthorizerEventHandler
+                            const definition =
+                                'request' in x.symbol
+                                    ? (x.symbol.request as RequestAuthorizerEventHandler)
+                                    : { security: undefined }
                             return {
                                 ...definition.security,
                                 ...securitySchemes,
