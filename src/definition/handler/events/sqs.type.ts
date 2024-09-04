@@ -77,7 +77,7 @@ export interface FifoSettings {
     /**
      * Whether to enable FIFO queue support. Default is false.
      */
-    enabled?: string | undefined
+    enabled?: boolean | undefined
     /**
      * Whether to enable content-based deduplication. Default is false.
      *

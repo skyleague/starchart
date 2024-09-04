@@ -255,7 +255,7 @@
       "description": "The FIFO settings to use when retrieving messages from the queue.",
       "properties": {
         "enabled": {
-          "type": "string",
+          "type": "boolean",
           "description": "Whether to enable FIFO queue support. Default is false."
         },
         "contentBasedDeduplication": {
