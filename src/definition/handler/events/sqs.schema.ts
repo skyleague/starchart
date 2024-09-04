@@ -13,7 +13,7 @@ import {
 } from '@skyleague/therefore'
 
 export const fifoSettings = $object({
-    enabled: $string().optional().describe('Whether to enable FIFO queue support. Default is false.'),
+    enabled: $boolean().optional().describe('Whether to enable FIFO queue support. Default is false.'),
     contentBasedDeduplication: $boolean()
         .optional()
         .default(true)
