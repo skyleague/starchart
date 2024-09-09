@@ -43,7 +43,7 @@ module "config_lambda" {
   handler_file  = module.lambda_settings.handler_file
 
   function_prefix    = module.lambda_settings.function_prefix
-  template_variables = merge(var.template_variables, { param = local.starchart.param })
+  template_variables = merge(var.template_variables, { param = try(local.starchart.param, null) })
 
   appconfig_application_arn = local.bootstrap.appconfig.application.arn
 

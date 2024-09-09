@@ -33,25 +33,6 @@ variable "request_authorizers" {
   nullable    = false
 }
 
-variable "jwt_authorizers" {
-  type = map(object({
-    identity_source = string
-
-    ttl_in_seconds  = optional(number, 0)
-
-    issuer   = string
-    audience = optional(list(string))
-
-    security_scheme = optional(map(any), {})
-    # Allow additional custom authorizer properties
-    # Reference: https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-swagger-extensions-authorizer.html
-    x-amazon-apigateway-authorizer = optional(map(any), {})
-  }))
-  description = "Map of authorizers for the API"
-  default     = {}
-  nullable    = false
-}
-
 variable "definition" {
   description = "Definition of the OpenAPI paths (see the README for examples)"
   type = map(map(object({
@@ -61,7 +42,6 @@ variable "definition" {
 
     parameters = optional(string)
     responses  = optional(string)
-    
     lambda = optional(object({
       function_name = string
     }))
@@ -87,7 +67,11 @@ variable "log_creation_disabled" {
   type        = bool
   default     = false
 }
-
+variable "log_canary_creation_disabled" {
+  description = "Disable creation of CloudWatch LogGroups for Canary releases"
+  type        = bool
+  default     = false
+}
 variable "log_settings_override" {
   description = "Override log group settings for specific stages"
   type = map(object({
@@ -102,12 +86,30 @@ variable "stages" {
   type        = set(string)
   default     = ["current"]
 }
-
+variable "xray_tracing_enabled" {
+  description = "Enable XRay Tracing"
+  type        = bool
+  default     = true
+}
 variable "disable_execute_api_endpoint" {
   type    = bool
   default = true
 }
-
+variable "endpoint_type" {
+  description = "Valid options: REGIONAL, PRIVATE, EDGE"
+  type        = string
+  default     = "REGIONAL"
+}
+variable "vpc_endpoint_ids" {
+  description = "List of VPC endpoint IDs to connect to (only applicable for endpoint_type=PRIVATE)"
+  type        = list(string)
+  default     = []
+}
+variable "vpc_id" {
+  description = "Identifier of the VPC this API should be deployed in"
+  type        = string
+  default     = null
+}
 variable "custom_access_logs_format" {
   # Reference: https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html#context-variable-reference
   description = "Logging format for Access Logs"
@@ -130,7 +132,16 @@ variable "custom_access_logs_format" {
   }
 }
 
-
+variable "disable_global_method_settings" {
+  description = "Disable global method settings. This allows custom definitions to be created outside of this module, allowing for more advance caching/throttling setups."
+  type        = bool
+  default     = false
+}
+variable "disable_rest_api_vpc_policy" {
+  description = "Disable the creation of the aws_api_gateway_rest_api_policy. This allows manual creation of this policy rather than managed creation."
+  type        = bool
+  default     = false
+}
 variable "logging_level" {
   type    = string
   default = "INFO"
@@ -144,19 +155,6 @@ variable "data_trace_enabled" {
   description = "Log full requests to CloudWatch"
   type        = bool
   default     = false
-}
-
-variable "throttling_burst_limit" {
-  description = "The burst limit for the API Gateway"
-  type        = number
-  default     = 500
-
-}
-
-variable "throttling_rate_limit" {
-  description = "The rate limit for the API Gateway"
-  type        = number
-  default     = 100
 }
 
 variable "account_id" {
@@ -181,7 +179,7 @@ data "aws_region" "current" {
 
 locals {
   log_stages = [
-    for stage in var.stages : stage if !(lookup(var.log_settings_override, stage, null) != null ? var.log_settings_override[stage].disabled : var.log_creation_disabled)
+    for stage in flatten([for stage in var.stages : var.log_canary_creation_disabled ? [stage] : [stage, "${stage}/Canary"]]) : stage if !(lookup(var.log_settings_override, stage, null) != null ? var.log_settings_override[stage].disabled : var.log_creation_disabled)
   ]
   region     = var.region != null ? var.region : data.aws_region.current[0].name
   account_id = var.account_id != null ? var.account_id : data.aws_caller_identity.current[0].account_id

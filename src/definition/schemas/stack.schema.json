@@ -4,10 +4,109 @@
   "type": "object",
   "properties": {
     "httpApi": {
-      "$ref": "#/$defs/Apigateway"
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the API Gateway, defaults to the stack name."
+        },
+        "deferDeployment": {
+          "type": "boolean",
+          "description": "Defer deployment of the API to a later stage.",
+          "default": false
+        },
+        "disableExecuteApiEndpoint": {
+          "type": "boolean",
+          "description": "Disable the execute-api endpoint.",
+          "default": true
+        },
+        "defaultAuthorizer": {
+          "type": "object",
+          "description": "The default authorizer for the API.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The default authorizer for the API."
+            },
+            "scopes": {
+              "type": "array",
+              "description": "The default scopes for the API.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["name"],
+          "additionalProperties": true
+        },
+        "authorizers": {
+          "type": "object",
+          "description": "Map of authorizers for the API.",
+          "default": {},
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/HttpApiRequestAuthorizer"
+              },
+              {
+                "$ref": "#/$defs/JwtAuthorizer"
+              }
+            ]
+          }
+        }
+      },
+      "additionalProperties": true
     },
     "restApi": {
-      "$ref": "#/$defs/Apigateway"
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the API Gateway, defaults to the stack name."
+        },
+        "deferDeployment": {
+          "type": "boolean",
+          "description": "Defer deployment of the API to a later stage.",
+          "default": false
+        },
+        "disableExecuteApiEndpoint": {
+          "type": "boolean",
+          "description": "Disable the execute-api endpoint.",
+          "default": true
+        },
+        "defaultAuthorizer": {
+          "type": "object",
+          "description": "The default authorizer for the API.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The default authorizer for the API."
+            },
+            "scopes": {
+              "type": "array",
+              "description": "The default scopes for the API.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["name"],
+          "additionalProperties": true
+        },
+        "authorizers": {
+          "type": "object",
+          "description": "Map of authorizers for the API.",
+          "default": {},
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/RequestAuthorizer"
+              }
+            ]
+          }
+        }
+      },
+      "additionalProperties": true
     },
     "lambda": {
       "type": "object",
@@ -81,60 +180,6 @@
   },
   "additionalProperties": true,
   "$defs": {
-    "Apigateway": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The name of the API Gateway, defaults to the stack name."
-        },
-        "deferDeployment": {
-          "type": "boolean",
-          "description": "Defer deployment of the API to a later stage.",
-          "default": false
-        },
-        "disableExecuteApiEndpoint": {
-          "type": "boolean",
-          "description": "Disable the execute-api endpoint.",
-          "default": true
-        },
-        "authorizers": {
-          "type": "object",
-          "description": "Map of authorizers for the API.",
-          "default": {},
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/HttpApiRequestAuthorizer"
-              },
-              {
-                "$ref": "#/$defs/JwtAuthorizer"
-              }
-            ]
-          }
-        },
-        "defaultAuthorizer": {
-          "type": "object",
-          "description": "The default authorizer for the API.",
-          "properties": {
-            "name": {
-              "type": "string",
-              "description": "The default authorizer for the API."
-            },
-            "scopes": {
-              "type": "array",
-              "description": "The default scopes for the API.",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          "required": ["name"],
-          "additionalProperties": true
-        }
-      },
-      "additionalProperties": true
-    },
     "HttpApiRequestAuthorizer": {
       "allOf": [
         {
