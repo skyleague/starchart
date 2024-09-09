@@ -14,11 +14,6 @@ locals {
           for name, authorizer in input.request_authorizers : "${stack}-${name}" => authorizer
         } if input.name == name
       ]...)
-      jwt_authorizers = merge([
-        for stack, input in local._rest_api_stacks : {
-          for name, authorizer in input.jwt_authorizers : "${stack}-${name}" => authorizer
-        } if input.name == name
-      ]...)
       definition = {
         for path in toset(flatten([for stack, input in local._rest_api_stacks : keys(input.definition)])) : path => {
           for method in toset(flatten([for stack, input in local._rest_api_stacks : try(keys(input.definition[path]), [])])) : method => [for stack, input in local._rest_api_stacks : merge(
@@ -51,7 +46,6 @@ module "rest_api" {
   definition = each.value.definition
   
   request_authorizers = each.value.request_authorizers
-  jwt_authorizers = each.value.jwt_authorizers
 
   disable_execute_api_endpoint = each.value.disable_execute_api_endpoint
 }
