@@ -9,9 +9,9 @@ locals {
   ]...)
   eventbridge_to_sqs = merge([
     for function_id, definition in local.handlers : {
-      for event in try(definition.events, []) : event.sqs.queueId => {
+      for idx, event in try(definition.events, []) : event.sqs.queueId => {
         event_bus_name = try(event.sqs.eventbridge.eventBusName, var.resources.eventbridge[event.sqs.eventbridge.eventBusId].id, null)
-        event_pattern  = try(jsonencode(event.sqs.eventbridge.eventPattern), null)
+        event_pattern  = try(jsonencode(local.formatted_handlers[function_id].events[idx].sqs.eventbridge.eventPattern), null)
       } if try(event.sqs.eventbridge, null) != null
     }
   ]...)
@@ -53,7 +53,7 @@ locals {
       for idx, event in try(definition.events, []) : try(event.ruleNamePrefix, "${function_id}-${idx}") => {
         function_name = definition.function_name
         function_id   = function_id
-        schedule      = event.schedule
+        schedule      = local.formatted_handlers[function_id].events[idx].schedule
       } if try(event.schedule, null) != null
     }
   ]...)

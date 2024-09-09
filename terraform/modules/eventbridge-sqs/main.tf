@@ -1,9 +1,9 @@
 resource "aws_cloudwatch_event_rule" "eb_sqs" {
-  for_each = var.eventbridge_to_sqs
+  for_each = var.eventbridge_to_sqs_rules
 
   name_prefix    = each.key
-  event_bus_name = each.value.event_bus_name
-  event_pattern  = each.value.event_pattern
+  event_bus_name = var.eventbridge_to_sqs[each.key].event_bus_name
+  event_pattern  = var.eventbridge_to_sqs[each.key].event_pattern
 }
 
 resource "aws_cloudwatch_event_target" "eb_sqs" {

@@ -107,6 +107,6 @@ output "deferred_http_api_input" {
   }) : null
 }
 
-output "http_api" {
-  value = try(module.http_api[0], null)
-}
+# output "http_api" {
+#   value = try(module.http_api[0], null)
+# }

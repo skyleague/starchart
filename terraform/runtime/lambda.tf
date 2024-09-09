@@ -35,15 +35,30 @@ locals {
   local_artifact_path_prefix = coalesce(module.lambda_settings.local_artifact.path_prefix, "${local.config.repo_root}/.artifacts/${replace(module.lambda_settings.functions_dir, local.config.repo_root, "")}")
 }
 
+module "config_lambda_handlers" {
+  source = "../../modules/config-lambda-handlers"
+
+  functions_dir = local.functions_dir
+  handler_file  = local.handler_file
+
+  function_prefix = local.function_prefix
+
+  appconfig                 = local._resources.appconfig
+  appconfig_application_arn = local.bootstrap.appconfig.application.arn
+}
+
+# output "config_lambda_handlers" {
+#   value = module.config_lambda_handlers
+# }
 
 module "config_lambda" {
   source = "../modules/config-lambda"
 
-  functions_dir = "${local.starchart.config.repo_root}/${module.lambda_settings.functions_dir}"
-  handler_file  = module.lambda_settings.handler_file
+  handlers           = module.config_lambda_handlers.handlers
+  publishes          = module.config_lambda_handlers.publishes
+  function_resources = module.config_lambda_handlers.function_resources
 
-  function_prefix    = module.lambda_settings.function_prefix
-  template_variables = merge(var.template_variables, { param = local.starchart.param })
+  template_variables = var.template_variables
 
   appconfig_application_arn = local.bootstrap.appconfig.application.arn
 
@@ -59,29 +74,26 @@ module "config_lambda" {
 module "lambda" {
   source = "git::https://github.com/skyleague/aws-lambda.git?ref=v2.2.0"
 
-  for_each = module.config_lambda.lambda_definitions
+  for_each = module.config_lambda_handlers.handlers
+  # for_each = {}
 
-  function_name = each.value.function_name
+  function_name = module.config_lambda.lambda_definitions[each.key].function_name
 
-  runtime     = coalesce(each.value.runtime, module.lambda_settings.runtime)
-  memory_size = coalesce(each.value.memory_size, module.lambda_settings.memory_size)
-  timeout     = coalesce(each.value.timeout, module.lambda_settings.timeout)
-  handler     = coalesce(each.value.handler, module.lambda_settings.handler)
-  vpc_config  = try(each.value.vpc_config, module.lambda_settings.vpc_config, null)
+  runtime     = coalesce(module.config_lambda.lambda_definitions[each.key].runtime, var.lambda.runtime)
+  vpc_config  = try(module.config_lambda.lambda_definitions[each.key].vpc_config, var.lambda.vpc_config, null)
+  handler     = coalesce(module.config_lambda.lambda_definitions[each.key].handler, var.lambda.handler, "index.handler")
+  memory_size = coalesce(module.config_lambda.lambda_definitions[each.key].memory_size, var.lambda.memory_size, 1024)
+  timeout     = coalesce(module.config_lambda.lambda_definitions[each.key].timeout, var.lambda.timeout, 20)
 
-  environment     = merge(module.lambda_settings.environment, each.value.environment)
-  inline_policies = merge(module.lambda_settings.inline_policies, each.value.inline_policies)
+  environment = merge(var.lambda.environment, module.config_lambda.lambda_definitions[each.key].environment)
 
-  # when we support s3 artifacts, we need to change the default logic
-  local_artifact = module.lambda_settings.local_artifact == null ? null : {
-    type      = module.lambda_settings.local_artifact.type
-    path      = "${local.local_artifact_path_prefix}${each.value.artifact_path}${module.lambda_settings.local_artifact.type == "zip" ? ".zip" : ""}"
-    s3_bucket = try(module.lambda_settings.local_artifact.s3_bucket, local.bootstrap.artifacts_bucket.id)
-    s3_prefix = module.lambda_settings.local_artifact.s3_prefix
-  }
+  inline_policies = merge(var.lambda.inline_policies, module.config_lambda.lambda_definitions[each.key].inline_policies)
 
-  tags = {
-    Path = "/${module.lambda_settings.functions_dir}${each.value.artifact_path}/${split(".", coalesce(each.value.handler, module.lambda_settings.handler, "index.handler"))[0]}"
+  local_artifact = var.lambda.local_artifact == null ? null : {
+    type      = var.lambda.local_artifact.type
+    path      = "${local.local_artifact_path_prefix}${module.config_lambda.lambda_definitions[each.key].artifact_path}${var.lambda.local_artifact.type == "zip" ? ".zip" : ""}"
+    s3_bucket = try(var.lambda.local_artifact.s3_bucket, local.bootstrap.artifacts_bucket.id)
+    s3_prefix = var.lambda.local_artifact.s3_prefix
   }
 }
 

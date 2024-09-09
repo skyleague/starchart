@@ -9,10 +9,10 @@ locals {
       timeout     = try(definition.timeout, null)
       memory_size = try(definition.memorySize, null)
 
-      vpc_config = try(definition.vpcConfig, null)
+      vpc_config = try(local.formatted_handlers[function_id].vpcConfig, null)
 
       environment = merge(
-        try(definition.environment, {}),
+        try(local.formatted_handlers[function_id].environment, {}),
         merge([
           for resource in try(local.publishes[function_id].eventbridge, [])
           : var.resources.eventbridge[resource.eventBusId].env

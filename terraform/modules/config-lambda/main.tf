@@ -1,29 +1,34 @@
 
 
 locals {
-  _base_handlers = [
-    for f in fileset(var.functions_dir, "functions/*/${var.handler_file}") : {
-      basedir = dirname(f)
-      definition = yamldecode(
-        templatefile(
-          "${var.functions_dir}/${f}",
-          merge(var.template_variables, local.resources_env)
-        )
-      )
-    }
-  ]
-  _handlers = [
-    for h in local._base_handlers : {
-      basedir     = h.basedir
-      definition  = h.definition
-      function_id = try(h.definition.functionId, replace(replace(h.basedir, "functions/", ""), "/[^a-zA-Z0-9]+/", "-"))
-    }
-  ]
-  handlers = {
-    for h in local._handlers : h.function_id => merge(h.definition, {
-      function_name = "${var.function_prefix}${try(h.definition.functionName, h.function_id)}"
-      artifact_path = h.basedir
-    })
+  handlers = var.handlers
+  # formatted_handlers = yamldecode(
+  #   templatestring(
+  #     tostring(yamlencode(tomap(var.handlers))),
+  #     merge(var.template_variables, local.resources_env)
+  #   )
+  # )
+
+  formatted_handlers = {
+    for k, v in var.handlers : k => merge(
+      v,
+      yamldecode(templatefile(v.handler_file, merge(var.template_variables, local.resources_env))),
+      {
+        function_name = v.function_name
+        artifact_path = v.artifact_path
+      }
+    )
   }
+
+  # handlers = {
+  #   for k0, v0 in var.handlers : k0 => {
+  #     for k1, v1 in v0 : k1 => jsondecode(
+  #       templatestring(
+  #         jsonencode(v1),
+  #         merge(var.template_variables, local.resources_env)
+  #       )
+  #     )
+  #   }
+  # }
 }
 

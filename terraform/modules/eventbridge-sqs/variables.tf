@@ -6,6 +6,11 @@ variable "eventbridge_to_sqs" {
   description = "The EventBridge events to be forwarded to SQS queues. Keys are the queue IDs."
 }
 
+variable "eventbridge_to_sqs_rules" {
+  type        = map(bool)
+  description = "Static map of EventBridge rules to SQS queues. Keys are the rule IDs."
+}
+
 variable "sqs" {
   type = map(object({
     queue = object({

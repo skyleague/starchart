@@ -61,18 +61,19 @@ resource "aws_cloudwatch_metric_alarm" "sqs_dlq" {
 module "sqs_trigger" {
   source = "git::https://github.com/skyleague/aws-lambda-sqs-trigger.git?ref=v2.0.0"
 
-  for_each = module.config_lambda.sqs_triggers
+  for_each = module.config_lambda_handlers.sqs_triggers
 
   sqs        = local.resources.sqs_queue[each.key]
-  lambda     = module.lambda[each.value.function_id].lambda
-  batch_size = coalesce(each.value.batch_size, 1)
+  lambda     = module.lambda[module.config_lambda.sqs_triggers[each.key].function_id].lambda
+  batch_size = coalesce(module.config_lambda.sqs_triggers[each.key].batch_size, 1)
 }
 
 module "eventbridge_sqs" {
   source = "../modules/eventbridge-sqs"
 
-  eventbridge_to_sqs = module.config_lambda.eventbridge_to_sqs
-  sqs                = module.sqs
+  eventbridge_to_sqs_rules = module.config_lambda_handlers.eventbridge_to_sqs
+  eventbridge_to_sqs       = module.config_lambda.eventbridge_to_sqs
+  sqs                      = module.sqs
   # eventbridge_kms_key_id = var.eventbridge.kms_master_key_id
 }
 
