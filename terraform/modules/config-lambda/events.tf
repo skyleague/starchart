@@ -24,7 +24,7 @@ locals {
     ]
   ])
   api_definition = {
-    for http_path in flatten([for event in local.http_events : event.http.path]) : http_path => {
+    for http_path in toset(flatten([for event in local.http_events : event.http.path])) : http_path => {
       for event in local.http_events : upper(event.http.method) => merge({
         function_name = event.function_name
       }, try(event.http.authorizer, null) != null ? { authorizer = event.http.authorizer } : {})
