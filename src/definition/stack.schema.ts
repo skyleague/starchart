@@ -42,10 +42,6 @@ export const apigateway = $object({
     name: $string().optional().describe('The name of the API Gateway, defaults to the stack name.'),
     deferDeployment: $boolean().optional().default(false).describe('Defer deployment of the API to a later stage.'),
     disableExecuteApiEndpoint: $boolean().optional().default(true).describe('Disable the execute-api endpoint.'),
-    authorizers: $record($union([httpApiRequestAuthorizer.reference(), jwtAuthorizer.reference()]))
-        .optional()
-        .default({})
-        .describe('Map of authorizers for the API.'),
     defaultAuthorizer: $object({
         name: $string().describe('The default authorizer for the API.'),
         scopes: $string().array().optional().describe('The default scopes for the API.'),
@@ -55,8 +51,22 @@ export const apigateway = $object({
 })
 
 export const stack = $object({
-    httpApi: apigateway.reference().optional(),
-    restApi: apigateway.reference().optional(),
+    httpApi: apigateway
+        .extend({
+            authorizers: $record($union([httpApiRequestAuthorizer.reference(), jwtAuthorizer.reference()]))
+                .optional()
+                .default({})
+                .describe('Map of authorizers for the API.'),
+        })
+        .optional(),
+    restApi: apigateway
+        .extend({
+            authorizers: $record($union([requestAuthorizer.reference()]))
+                .optional()
+                .default({})
+                .describe('Map of authorizers for the API.'),
+        })
+        .optional(),
 
     lambda: $object({
         runtime: starChartHandler.shape.runtime.optional(),

@@ -24,17 +24,19 @@ variable "disable_execute_api_endpoint" {
   nullable    = false
 }
 
-variable "authorizers" {
+variable "request_authorizers" {
   type = map(object({
+    type = string
+    security_scheme = optional(any)
     identity_source = optional(list(string), [
       "context.httpMethod",
       "context.path",
       "method.request.header.Authorization",
     ])
-    function_id    = optional(string)
-    function_name  = optional(string)
     ttl_in_seconds = optional(number, 60)
-    type           = optional(string, "request")
+
+    function_id             = optional(string)
+    function_name           = string
   }))
   description = "Map of authorizers for the API"
   default     = {}
@@ -70,8 +72,12 @@ output "disable_execute_api_endpoint" {
   description = "Whether the execute-api endpoint is disabled"
 }
 
-output "authorizers" {
-  value       = var.authorizers
+output "request_authorizers" {
+  value = {
+    for name, authorizer in var.request_authorizers : name => merge(authorizer, {
+      identity_source = join(",", authorizer.identity_source)
+    })
+  }
   description = "Map of authorizers for the API"
 }
 

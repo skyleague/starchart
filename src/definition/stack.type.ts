@@ -28,16 +28,6 @@ export interface Apigateway {
      */
     disableExecuteApiEndpoint?: boolean | undefined
     /**
-     * Map of authorizers for the API.
-     *
-     * @default {  }
-     */
-    authorizers?:
-        | {
-              [k: string]: (HttpApiRequestAuthorizer | JwtAuthorizer) | undefined
-          }
-        | undefined
-    /**
      * The default authorizer for the API.
      */
     defaultAuthorizer?:
@@ -133,8 +123,96 @@ export type RequestAuthorizer = {
 )
 
 export interface Stack {
-    httpApi?: Apigateway | undefined
-    restApi?: Apigateway | undefined
+    httpApi?:
+        | {
+              /**
+               * The name of the API Gateway, defaults to the stack name.
+               */
+              name?: string | undefined
+              /**
+               * Defer deployment of the API to a later stage.
+               *
+               * @default false
+               */
+              deferDeployment?: boolean | undefined
+              /**
+               * Disable the execute-api endpoint.
+               *
+               * @default true
+               */
+              disableExecuteApiEndpoint?: boolean | undefined
+              /**
+               * The default authorizer for the API.
+               */
+              defaultAuthorizer?:
+                  | {
+                        /**
+                         * The default authorizer for the API.
+                         */
+                        name: string
+                        /**
+                         * The default scopes for the API.
+                         */
+                        scopes?: string[] | undefined
+                    }
+                  | undefined
+              /**
+               * Map of authorizers for the API.
+               *
+               * @default {  }
+               */
+              authorizers?:
+                  | {
+                        [k: string]: (HttpApiRequestAuthorizer | JwtAuthorizer) | undefined
+                    }
+                  | undefined
+          }
+        | undefined
+    restApi?:
+        | {
+              /**
+               * The name of the API Gateway, defaults to the stack name.
+               */
+              name?: string | undefined
+              /**
+               * Defer deployment of the API to a later stage.
+               *
+               * @default false
+               */
+              deferDeployment?: boolean | undefined
+              /**
+               * Disable the execute-api endpoint.
+               *
+               * @default true
+               */
+              disableExecuteApiEndpoint?: boolean | undefined
+              /**
+               * The default authorizer for the API.
+               */
+              defaultAuthorizer?:
+                  | {
+                        /**
+                         * The default authorizer for the API.
+                         */
+                        name: string
+                        /**
+                         * The default scopes for the API.
+                         */
+                        scopes?: string[] | undefined
+                    }
+                  | undefined
+              /**
+               * Map of authorizers for the API.
+               *
+               * @default {  }
+               */
+              authorizers?:
+                  | {
+                        [k: string]: RequestAuthorizer | undefined
+                    }
+                  | undefined
+          }
+        | undefined
     /**
      * The configuration for the lambda runtime.
      *
