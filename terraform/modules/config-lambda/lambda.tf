@@ -1,18 +1,18 @@
 locals {
   lambda_definitions = {
-    for function_id, definition in local.handlers : function_id => {
-      function_name = definition.function_name
-      artifact_path = definition.artifact_path
+    for function_id, _definition in local.handlers : function_id => {
+      function_name = _definition.function_name
+      artifact_path = _definition.artifact_path
 
-      handler     = try(definition.handler, null)
-      runtime     = try(definition.runtime, null)
-      timeout     = try(definition.timeout, null)
-      memory_size = try(definition.memorySize, null)
+      handler     = try(_definition.handler, null)
+      runtime     = try(_definition.runtime, null)
+      timeout     = try(local.formatted_handlers[function_id].timeout, null)
+      memory_size = try(local.formatted_handlers[function_id].memorySize, null)
 
-      vpc_config = try(definition.vpcConfig, null)
+      vpc_config = try(local.formatted_handlers[function_id].vpcConfig, null)
 
       environment = merge(
-        try(definition.environment, {}),
+        try(local.formatted_handlers[function_id].environment, {}),
         merge([
           for resource in try(local.publishes[function_id].eventbridge, [])
           : var.resources.eventbridge[resource.eventBusId].env
@@ -33,7 +33,7 @@ locals {
       )
 
       inline_policies = merge(
-        { for k in try(definition.inlinePolicies, []) : k => try(var.inline_policies[k], null) },
+        { for k in try(_definition.inlinePolicies, []) : k => try(var.inline_policies[k], null) },
         length(try(local.publishes[function_id].eventbridge, [])) == 0 ? {} : {
           starchart_eventbridge_publish = data.aws_iam_policy_document.eventbridge_publish[function_id]
         },
