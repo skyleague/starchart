@@ -85,6 +85,15 @@ module "lambda" {
   }
 }
 
+locals {
+  _cloudwatch_lambda = {
+    for function_id, lambda in module.lambda : function_id => {
+      name = lambda.log_group.name
+      arn  = lambda.log_group.arn
+    }
+  }
+}
+
 output "lambdas" {
   value = {
     for key, lambda in module.config_lambda.lambda_definitions : key => {

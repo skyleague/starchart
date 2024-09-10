@@ -19,9 +19,9 @@ module "rest_api_settings" {
         type            = authorizer.type
         identity_source = try(authorizer.identitySource, null)
 
-        ttl_in_seconds  = try(authorizer.ttlInSeconds, null)
-        function_id     = try(authorizer.functionId, null)
-        function_name     = try(authorizer.functionName, null)
+        ttl_in_seconds = try(authorizer.ttlInSeconds, null)
+        function_id    = try(authorizer.functionId, null)
+        function_name  = try(authorizer.functionName, null)
 
         security_scheme = try(authorizer.securityScheme, null)
       } if try(authorizer.type, "request") == "request"
@@ -58,7 +58,7 @@ locals {
           name   = try(var.rest_api.authorizers[path_item.authorizer.name].name, path_item.authorizer.name)
           scopes = try(path_item.authorizer.scopes, null)
         }
-        
+
         security = try(path_item.security, null)
       }
     })
@@ -81,6 +81,21 @@ module "rest_api" {
   depends_on                   = [module.lambda]
 }
 
+
+locals {
+  _cloudwatch_rest_api = merge({
+    for stage, logs in try(module.rest_api[0].access_log_groups, {}) : "access-${stage}" => {
+      name = logs.name
+      arn  = logs.arn
+    }
+    }, {
+    for stage, logs in try(module.rest_api[0].execution_log_groups, {}) : "execution-${stage}" => {
+      name = logs.name
+      arn  = logs.arn
+    }
+  })
+}
+
 output "deferred_rest_api_input" {
   value = try(module.rest_api_settings[0].defer_deployment, false) ? jsonencode({
     name = module.rest_api_settings[0].name
@@ -88,7 +103,7 @@ output "deferred_rest_api_input" {
     region     = local.starchart.aws_region
     account_id = local.starchart.aws_account_id
     definition = local.rest_api_definition
-    
+
     request_authorizers = module.rest_api_settings[0].request_authorizers
 
     disable_execute_api_endpoint = module.rest_api_settings[0].disable_execute_api_endpoint

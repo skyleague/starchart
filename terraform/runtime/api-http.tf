@@ -19,9 +19,9 @@ module "http_api_settings" {
         type            = authorizer.type
         identity_source = try(authorizer.identitySource, null)
 
-        ttl_in_seconds  = try(authorizer.ttlInSeconds, null)
-        function_id     = try(authorizer.functionId, null)
-        function_name     = try(authorizer.functionName, null)
+        ttl_in_seconds = try(authorizer.ttlInSeconds, null)
+        function_id    = try(authorizer.functionId, null)
+        function_name  = try(authorizer.functionName, null)
 
         security_scheme = try(authorizer.securityScheme, null)
       } if try(authorizer.type, "request") == "request"
@@ -40,9 +40,9 @@ module "http_api_settings" {
       identity_source = try(authorizer.identitySource, null)
       ttl_in_seconds  = try(authorizer.ttlInSeconds, null)
 
-      issuer          = try(authorizer.issuer, null)
-      audience        = try(authorizer.audience, null)
-      
+      issuer   = try(authorizer.issuer, null)
+      audience = try(authorizer.audience, null)
+
       security_scheme = try(authorizer.securityScheme, null)
     } if try(authorizer.type, null) == "jwt"
   }
@@ -68,7 +68,7 @@ locals {
           name   = try(var.http_api.authorizers[path_item.authorizer.name].name, path_item.authorizer.name)
           scopes = try(path_item.authorizer.scopes, null)
         }
-        
+
         security = try(path_item.security, null)
       }
     })
@@ -86,10 +86,24 @@ module "http_api" {
   definition = local.http_api_definition
 
   request_authorizers = module.http_api_settings[0].request_authorizers
-  jwt_authorizers = module.http_api_settings[0].jwt_authorizers
+  jwt_authorizers     = module.http_api_settings[0].jwt_authorizers
 
   disable_execute_api_endpoint = module.http_api_settings[0].disable_execute_api_endpoint
   depends_on                   = [module.lambda]
+}
+
+locals {
+  _cloudwatch_http_api = merge({
+    for stage, logs in try(module.http_api[0].access_log_groups, {}) : "access-${stage}" => {
+      name = logs.name
+      arn  = logs.arn
+    }
+    }, {
+    for stage, logs in try(module.http_api[0].execution_log_groups, {}) : "execution-${stage}" => {
+      name = logs.name
+      arn  = logs.arn
+    }
+  })
 }
 
 output "deferred_http_api_input" {
@@ -101,7 +115,7 @@ output "deferred_http_api_input" {
     definition = local.http_api_definition
 
     request_authorizers = module.http_api_settings[0].request_authorizers
-    jwt_authorizers = module.http_api_settings[0].jwt_authorizers
+    jwt_authorizers     = module.http_api_settings[0].jwt_authorizers
 
     disable_execute_api_endpoint = module.http_api_settings[0].disable_execute_api_endpoint
   }) : null
