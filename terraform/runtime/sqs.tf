@@ -59,7 +59,7 @@ resource "aws_cloudwatch_metric_alarm" "sqs_dlq" {
 }
 
 module "sqs_trigger" {
-  source = "git::https://github.com/skyleague/aws-lambda-sqs-trigger.git?ref=v2.0.0"
+  source = "git::https://github.com/skyleague/aws-lambda-sqs-trigger.git?ref=v2.0.1"
 
   for_each = module.config_lambda.sqs_triggers
 
