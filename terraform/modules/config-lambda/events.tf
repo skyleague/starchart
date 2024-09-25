@@ -32,8 +32,35 @@ locals {
       for event in local.http_events : upper(event.http.method) => merge(
         {
           function_name = event.function_name
-        },
-        try(event.http.authorizer, null) != null ? { authorizer = event.http.authorizer } : {}
+        }, 
+        try(event.http.authorizer, null) != null ? { authorizer = event.http.authorizer } : {},
+        try(event.http.monitoring, null) != null ? {
+          monitoring = {
+            for metric, metric_config in try(event.http.monitoring, {}) : metric => {
+              static = {
+                for statistic, config in try(metric_config.static, {}) : statistic => {
+                  for key, value in {
+                    enabled            = try(config.enabled, null)
+                    threshold          = try(config.threshold, null)
+                    period             = try(config.period, null)
+                    evaluation_periods = try(config.evaluationPeriods, null)
+                  } : key => value if value != null
+                } if config != null
+              }
+              anomaly = {
+                for statistic, config in try(metric_config.anomaly, {}) : statistic => {
+                  for key, value in {
+                    enabled                         = try(config.enabled, null)
+                    evaluation_periods              = try(config.evaluationPeriods, null)
+                    datapoints_to_alarm             = try(config.datapointsToAlarm, null)
+                    band_width_standard_deviations  = try(config.bandWidthStandardDeviations, null)
+                    metric_period                   = try(config.metricPeriod, null)
+                  } : key => value if value != null
+                } if config != null
+              }
+            }
+          }
+        } : {}
       ) if event.http.path == http_path
     }
   }

@@ -1,5 +1,6 @@
 import { $boolean, $const, $intersection, $number, $object, $record, $string, $union } from '@skyleague/therefore'
 import { starChartHandler } from './handler.schema.js'
+import { apigatewayMonitoring } from './monitoring/apigateway.schema.js'
 import { securityScheme, servers } from './openapi.schema.js'
 
 export const requestAuthorizer = $intersection([
@@ -48,6 +49,7 @@ export const apigateway = $object({
     })
         .optional()
         .describe('The default authorizer for the API.'),
+    monitoring: apigatewayMonitoring.optional().describe('The monitoring configuration for the API.'),
 })
 
 export const stack = $object({

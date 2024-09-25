@@ -4,31 +4,54 @@ locals {
     for stack, subs in local.starchart.stacks : stack => jsondecode(subs.runtime.deferred_rest_api_input) if try(subs.runtime.deferred_rest_api_input, null) != null
   }
 
+  _rest_api_grouped_apis = {
+    for name in distinct([for stack, input in local._rest_api_stacks : input.name]) : name => [
+      for stack, input in local._rest_api_stacks : merge({stack = stack}, input) if input.name == name
+    ]
+  }
+
   rest_api_inputs = {
-    for name in toset([for stack, input in local._rest_api_stacks : input.name]) : name => {
-      account_id                   = toset([for stack, input in local._rest_api_stacks : input.account_id if input.name == name])
-      region                       = toset([for stack, input in local._rest_api_stacks : input.region if input.name == name])
-      disable_execute_api_endpoint = anytrue([for stack, input in local._rest_api_stacks : input.disable_execute_api_endpoint if input.name == name])
+    for name, apis in local._rest_api_grouped_apis : name => {
+      account_id                   = apis[0].account_id
+      region                       = apis[0].region
+      disable_execute_api_endpoint = anytrue([for api in apis : api.disable_execute_api_endpoint])
       request_authorizers = merge([
-        for stack, input in local._rest_api_stacks : {
-          for name, authorizer in input.request_authorizers : "${stack}-${name}" => authorizer
-        } if input.name == name
-      ]...)
-      definition = {
-        for path in toset(flatten([for stack, input in local._rest_api_stacks : keys(input.definition)])) : path => {
-          for method in toset(flatten([for stack, input in local._rest_api_stacks : try(keys(input.definition[path]), [])])) : method => [for stack, input in local._rest_api_stacks : merge(
-            input.definition[path][method],
-            {
-              authorizer = try(input.definition[path][method].authorizer, null) != null ? merge(input.definition[path][method].authorizer, {
-                name = "${stack}-${input.definition[path][method].authorizer.name}"
-              }) : null
-              security = try({
-                for authorizer_name, scopes in input.definition[path][method].security : "${name}-${authorizer_name}" => scopes
-              }, null)
-            }
-          ) if try(input.definition[path][method], null) != null][0]
+        for api in apis : {
+          for auth_name, authorizer in api.request_authorizers : "${api.stack}-${auth_name}" => authorizer
         }
-      }
+      ]...)
+      monitoring = merge({
+        for metric_type in distinct(flatten([for api in apis : keys(try(api.monitoring, {}))])) : metric_type => {
+          anomaly = merge([
+            for api in apis : try(api.monitoring[metric_type].anomaly, {})
+          ]...)
+          static = merge([
+            for api in apis : try(api.monitoring[metric_type].static, {})
+          ]...)
+        }  if metric_type != "actions"
+      }, {
+        actions = merge([
+          for api in apis : try(api.monitoring.actions, {})
+        ]...)
+      })
+      definition = merge([
+        for api in apis : {
+          for path, methods in api.definition : path => {
+            for method, config in methods : method => merge(
+              config,
+              {
+                authorizer = try(config.authorizer, null) != null ? merge(config.authorizer, {
+                  name = "${api.stack}-${config.authorizer.name}"
+                }) : null
+                security = try({
+                  for authorizer_name, scopes in config.security : "${api.stack}-${authorizer_name}" => scopes
+                }, null)
+                monitoring = try(config.monitoring, null)
+              }
+            )
+          }
+        }
+      ]...)
     }
   }
 }
@@ -41,9 +64,10 @@ module "rest_api" {
 
   name = each.key
 
-  region     = tolist(each.value.region)[0]
-  account_id = tolist(each.value.account_id)[0]
+  region     = each.value.region
+  account_id = each.value.account_id
   definition = each.value.definition
+  monitoring = each.value.monitoring
   
   request_authorizers = each.value.request_authorizers
 

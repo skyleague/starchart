@@ -70,8 +70,17 @@ variable "definition" {
       scopes                         = optional(list(string))
       security                       = optional(list(map(list(string))))
     }))
+    monitoring = optional(any)
   })))
 }
+
+variable "monitoring" {
+  description = "The monitoring configuration for the API Gateway"
+  type = any
+  default = {}
+  nullable = false
+}
+
 variable "log_retention_in_days" {
   description = "Log retention for access logs and execution logs (set to 0 or `null` to never expire)"
   type        = number

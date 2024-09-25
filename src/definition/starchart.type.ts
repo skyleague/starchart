@@ -4,10 +4,11 @@
  */
 /* eslint-disable */
 
+import type { Monitoring } from './monitoring/apigateway.type.js'
+import StarchartSchema from './schemas/starchart.schema.json' with { type: 'json' }
+
 import { Ajv } from 'ajv'
 import type { DefinedError } from 'ajv'
-
-import StarchartSchema from './schemas/starchart.schema.json' with { type: 'json' }
 
 export interface Starchart {
     project: {
@@ -32,6 +33,7 @@ export interface Starchart {
                   | undefined
           }
         | undefined
+    monitoring?: Monitoring | undefined
     /**
      * The stacks to deploy.
      */

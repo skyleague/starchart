@@ -23,6 +23,7 @@ variable "starchart" {
 module "common" {
   source = "../modules/_common"
 
+  bootstrap    = var.starchart.bootstrap
   config       = var.starchart.config
   default_tags = var.starchart.default_tags
 }
