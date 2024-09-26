@@ -204,27 +204,27 @@
       "type": "object",
       "properties": {
         "latency": {
-          "$ref": "#/$defs/ApigatewayMetric"
+          "$ref": "#/$defs/DefaultMetric"
         },
         "integrationLatency": {
-          "$ref": "#/$defs/ApigatewayMetric"
+          "$ref": "#/$defs/DefaultMetric"
         },
         "5xx": {
-          "$ref": "#/$defs/ApigatewayMetric"
+          "$ref": "#/$defs/DefaultMetric"
         },
         "4xx": {
-          "$ref": "#/$defs/ApigatewayMetric"
+          "$ref": "#/$defs/DefaultMetric"
         },
         "dataProcessed": {
-          "$ref": "#/$defs/ApigatewayMetric"
+          "$ref": "#/$defs/DefaultMetric"
         },
         "count": {
-          "$ref": "#/$defs/ApigatewayMetric"
+          "$ref": "#/$defs/DefaultMetric"
         }
       },
       "additionalProperties": true
     },
-    "ApigatewayMetric": {
+    "DefaultMetric": {
       "type": "object",
       "properties": {
         "static": {

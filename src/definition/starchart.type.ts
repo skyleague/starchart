@@ -4,7 +4,7 @@
  */
 /* eslint-disable */
 
-import type { Monitoring } from './monitoring/apigateway.type.js'
+import type { Monitoring } from './monitoring/monitoring.type.js'
 import StarchartSchema from './schemas/starchart.schema.json' with { type: 'json' }
 
 import { Ajv } from 'ajv'

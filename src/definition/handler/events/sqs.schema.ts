@@ -11,6 +11,7 @@ import {
     $union,
     $unknown,
 } from '@skyleague/therefore'
+import { sqsMonitoring } from '../../monitoring/metrics.schema.js'
 
 export const fifoSettings = $object({
     enabled: $boolean().optional().describe('Whether to enable FIFO queue support. Default is false.'),
@@ -72,6 +73,7 @@ export const sqsTrigger = $object({
         policy: $string().optional().describe('The policy of the queue.'),
         kmsDataKeyReusePeriodSeconds: $number().optional().describe('The data key reuse period of the queue.'),
         tags: $record($string).optional().describe('The tags to apply to the queue.'),
-        eventbridge: $ref(eventbridgeSettings).optional(),
+        eventbridge: eventbridgeSettings.optional(),
+        monitoring: sqsMonitoring.optional(),
     }).describe('Subscribes to an SQS queue.'),
 })

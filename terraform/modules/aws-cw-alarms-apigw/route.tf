@@ -8,6 +8,7 @@ variable "route_alarms" {
         enabled            = optional(bool, false)
         threshold          = optional(number)
         period             = optional(number)
+        datapoints_to_alarm = optional(number)
         evaluation_periods = optional(number)
       }))
       anomaly = optional(map(object({
