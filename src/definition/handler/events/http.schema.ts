@@ -1,5 +1,5 @@
 import { $enum, $object, $string } from '@skyleague/therefore'
-import { apigatewayMonitoringMetric } from '../../monitoring/apigateway.schema.js'
+import { apigatewayMonitoringMetric } from '../../monitoring/metrics.schema.js'
 
 export const httpTrigger = $object({
     http: $object({

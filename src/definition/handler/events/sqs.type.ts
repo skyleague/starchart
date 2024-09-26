@@ -4,6 +4,8 @@
  */
 /* eslint-disable */
 
+import type { SqsMonitoring } from '../../monitoring/metrics.type.js'
+
 /**
  * The dead-letter queue settings to use when messages are not processed.
  */
@@ -154,5 +156,6 @@ export interface SqsTrigger {
               }
             | undefined
         eventbridge?: EventbridgeSettings | undefined
+        monitoring?: SqsMonitoring | undefined
     }
 }

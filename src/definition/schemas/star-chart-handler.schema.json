@@ -187,27 +187,27 @@
       "type": "object",
       "properties": {
         "latency": {
-          "$ref": "#/$defs/ApigatewayMetric"
+          "$ref": "#/$defs/DefaultMetric"
         },
         "integrationLatency": {
-          "$ref": "#/$defs/ApigatewayMetric"
+          "$ref": "#/$defs/DefaultMetric"
         },
         "5xx": {
-          "$ref": "#/$defs/ApigatewayMetric"
+          "$ref": "#/$defs/DefaultMetric"
         },
         "4xx": {
-          "$ref": "#/$defs/ApigatewayMetric"
+          "$ref": "#/$defs/DefaultMetric"
         },
         "dataProcessed": {
-          "$ref": "#/$defs/ApigatewayMetric"
+          "$ref": "#/$defs/DefaultMetric"
         },
         "count": {
-          "$ref": "#/$defs/ApigatewayMetric"
+          "$ref": "#/$defs/DefaultMetric"
         }
       },
       "additionalProperties": true
     },
-    "ApigatewayMetric": {
+    "DefaultMetric": {
       "type": "object",
       "properties": {
         "static": {
@@ -458,6 +458,9 @@
             },
             "eventbridge": {
               "$ref": "#/$defs/EventbridgeSettings"
+            },
+            "monitoring": {
+              "$ref": "#/$defs/SqsMonitoring"
             }
           },
           "required": ["queueId"],
@@ -581,6 +584,48 @@
           "additionalProperties": true
         }
       ]
+    },
+    "SqsMonitoring": {
+      "type": "object",
+      "properties": {
+        "queue": {
+          "$ref": "#/$defs/SqsMonitoringMetric"
+        },
+        "dlq": {
+          "$ref": "#/$defs/SqsMonitoringMetric"
+        }
+      },
+      "additionalProperties": true
+    },
+    "SqsMonitoringMetric": {
+      "type": "object",
+      "properties": {
+        "numberOfMessagesSent": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "approximateNumberOfMessagesVisible": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "approximateNumberOfMessagesDelayed": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "approximateAgeOfOldestMessage": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "approximateNumberOfMessagesNotVisible": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "numberOfMessagesDeleted": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "numberOfMessagesReceived": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "numberOfEmptyReceives": {
+          "$ref": "#/$defs/DefaultMetric"
+        }
+      },
+      "additionalProperties": true
     },
     "ScheduledTrigger": {
       "type": "object",
