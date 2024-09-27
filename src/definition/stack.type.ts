@@ -4,7 +4,7 @@
  */
 /* eslint-disable */
 
-import type { ApigatewayMonitoring } from './monitoring/apigateway.type.js'
+import type { ApigatewayMonitoring } from './monitoring/metrics.type.js'
 import type { SecurityScheme, Servers } from './openapi.type.js'
 import StackSchema from './schemas/stack.schema.json' with { type: 'json' }
 

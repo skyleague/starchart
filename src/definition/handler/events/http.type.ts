@@ -4,7 +4,7 @@
  */
 /* eslint-disable */
 
-import type { ApigatewayMonitoringMetric } from '../../monitoring/apigateway.type.js'
+import type { ApigatewayMonitoringMetric } from '../../monitoring/metrics.type.js'
 
 export interface HttpTrigger {
     /**

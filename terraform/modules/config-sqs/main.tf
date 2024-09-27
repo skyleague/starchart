@@ -58,6 +58,10 @@ locals {
         name_prefix = local.queue_name_prefixes[queue_id]
         name        = local.queue_names[queue_id]
       },
+      # monitoring 
+      {
+        monitoring = try(local.handler_queue_settings[queue_id].sqs.monitoring, null)
+      },
       # Settings with custom defaults
       {
         visibility_timeout_seconds = coalesce(
