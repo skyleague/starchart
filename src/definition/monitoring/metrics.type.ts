@@ -81,6 +81,24 @@ export interface DefaultMetric {
         | undefined
 }
 
+export interface LambdaMonitoring {
+    account?: LambdaMonitoringMetric | undefined
+    function?: LambdaMonitoringMetric | undefined
+}
+
+export interface LambdaMonitoringMetric {
+    asyncEventAge?: DefaultMetric | undefined
+    asyncEventsDropped?: DefaultMetric | undefined
+    asyncEventsReceived?: DefaultMetric | undefined
+    claimedAccountConcurrency?: DefaultMetric | undefined
+    concurrentExecutions?: DefaultMetric | undefined
+    duration?: DefaultMetric | undefined
+    errors?: DefaultMetric | undefined
+    invocations?: DefaultMetric | undefined
+    throttles?: DefaultMetric | undefined
+    unreservedConcurrentExecutions?: DefaultMetric | undefined
+}
+
 export interface SqsMonitoring {
     queue?: SqsMonitoringMetric | undefined
     dlq?: SqsMonitoringMetric | undefined
