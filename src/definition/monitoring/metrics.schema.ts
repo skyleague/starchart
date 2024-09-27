@@ -79,3 +79,21 @@ export const sqsMonitoring = $object({
     queue: sqsMonitoringMetric,
     dlq: sqsMonitoringMetric,
 }).partial()
+
+export const lambdaMonitoringMetric = $object({
+    asyncEventAge: defaultMetric,
+    asyncEventsDropped: defaultMetric,
+    asyncEventsReceived: defaultMetric,
+    claimedAccountConcurrency: defaultMetric,
+    concurrentExecutions: defaultMetric,
+    duration: defaultMetric,
+    errors: defaultMetric,
+    invocations: defaultMetric,
+    throttles: defaultMetric,
+    unreservedConcurrentExecutions: defaultMetric,
+}).partial()
+
+export const lambdaMonitoring = $object({
+    account: lambdaMonitoringMetric,
+    function: lambdaMonitoringMetric,
+}).partial()

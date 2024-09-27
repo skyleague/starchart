@@ -85,6 +85,81 @@ module "lambda" {
   }
 }
 
+
+
+locals {
+  lambda_monitoring_defaults = {
+    function = {
+    }
+    account = {
+    }
+  }
+  lambda_function_monitoring = {
+    for name, config in module.config_lambda.lambda_definitions : module.lambda[name].lambda.function_name => {
+      for metric, values in {
+        for metric in distinct(concat(
+          keys(try(local.lambda_monitoring_defaults.function, {})),
+          keys(try(local.config.monitoring.lambda.function, {})),
+          keys(try(local.config.stack.lambda.monitoring.function, {})),
+          keys(try(config.monitoring.function, {}))
+        )) : metric => {
+          for subtype in ["static", "anomaly"] : subtype => {
+            for statistic, values in {
+              for statistic in distinct(concat(
+                keys(try(local.lambda_monitoring_defaults.function[metric][subtype], {})),
+                keys(try(local.config.monitoring.lambda.function[metric][subtype], {})),
+                keys(try(local.config.stack.lambda.monitoring.function[subtype], {})),
+                keys(try(config.monitoring.function[metric][subtype], {}))
+              )) :
+              statistic => merge(
+                try({ for k, v in local.lambda_monitoring_defaults.function[metric][subtype][statistic] : k => v if v != null }, {}),
+                try({ for k, v in local.config.monitoring.lambda.function[metric][subtype][statistic] : k => v if v != null }, {}),
+                try({ for k, v in local.config.stack.lambda.monitoring.function[subtype][statistic] : k => v if v != null }, {}),
+                try({ for k, v in config.monitoring.function[metric][subtype][statistic] : k => v if v != null }, {})
+              )
+            } : statistic => values if length(values) > 0
+          }
+        }
+      }: lower(metric) => values if length(values) > 0
+    }
+  }
+  lambda_account_monitoring = {
+    for metric, values in {
+      for metric in distinct(concat(
+        keys(try(local.lambda_monitoring_defaults.account, {})),
+        keys(try(local.config.monitoring.lambda.account, {})),
+        keys(try(local.config.stack.lambda.monitoring.account, {})),
+      )) : metric => {
+        for subtype in ["static", "anomaly"] : subtype => {
+          for statistic, values in {
+            for statistic in distinct(concat(
+              keys(try(local.lambda_monitoring_defaults.account[metric][subtype], {})),
+              keys(try(local.config.monitoring.lambda.account[metric][subtype], {})),
+              keys(try(local.config.stack.lambda.monitoring.account[subtype], {})),
+            )) :
+            statistic => merge(
+              try({ for k, v in local.lambda_monitoring_defaults.account[metric][subtype][statistic] : k => v if v != null }, {}),
+              try({ for k, v in local.config.monitoring.lambda.account[metric][subtype][statistic] : k => v if v != null }, {}),
+              try({ for k, v in local.config.stack.lambda.monitoring.account[subtype][statistic] : k => v if v != null }, {}),
+            )
+          } : statistic => values if length(values) > 0
+        }
+      }
+    }: lower(metric) => values if length(values) > 0
+  }
+}
+
+module "lambda_monitoring" {
+  source = "../modules/aws-cw-alarms-lambda"
+
+  monitoring = local.lambda_account_monitoring
+  function_alarms = local.lambda_function_monitoring
+  alarm_actions = try(local.config.monitoring.actions.alarm, [])
+  ok_actions    = try(local.config.monitoring.actions.ok, [])
+}
+
+
+
 locals {
   _cloudwatch_lambda = {
     for function_id, lambda in module.lambda : function_id => {

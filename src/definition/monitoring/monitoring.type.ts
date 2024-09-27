@@ -4,10 +4,11 @@
  */
 /* eslint-disable */
 
-import type { ApigatewayMonitoring, SqsMonitoring } from './metrics.type.js'
+import type { ApigatewayMonitoring, LambdaMonitoring, SqsMonitoring } from './metrics.type.js'
 
 export interface Monitoring {
     httpApi?: ApigatewayMonitoring | undefined
     restApi?: ApigatewayMonitoring | undefined
     sqs?: SqsMonitoring | undefined
+    lambda?: LambdaMonitoring | undefined
 }
