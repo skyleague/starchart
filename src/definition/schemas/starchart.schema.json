@@ -61,6 +61,9 @@
         },
         "sqs": {
           "$ref": "#/$defs/SqsMonitoring"
+        },
+        "lambda": {
+          "$ref": "#/$defs/LambdaMonitoring"
         }
       },
       "additionalProperties": true
@@ -327,6 +330,54 @@
           "$ref": "#/$defs/DefaultMetric"
         },
         "numberOfEmptyReceives": {
+          "$ref": "#/$defs/DefaultMetric"
+        }
+      },
+      "additionalProperties": true
+    },
+    "LambdaMonitoring": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "$ref": "#/$defs/LambdaMonitoringMetric"
+        },
+        "function": {
+          "$ref": "#/$defs/LambdaMonitoringMetric"
+        }
+      },
+      "additionalProperties": true
+    },
+    "LambdaMonitoringMetric": {
+      "type": "object",
+      "properties": {
+        "asyncEventAge": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "asyncEventsDropped": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "asyncEventsReceived": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "claimedAccountConcurrency": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "concurrentExecutions": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "duration": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "errors": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "invocations": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "throttles": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "unreservedConcurrentExecutions": {
           "$ref": "#/$defs/DefaultMetric"
         }
       },
