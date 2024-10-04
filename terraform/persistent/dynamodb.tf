@@ -38,10 +38,10 @@ module "dynamodb" {
   for_each = var.dynamodb
   source   = "git::https://github.com/skyleague/aws-dynamodb.git?ref=v3.0.0"
 
-  name                   = each.value.name
-  hash_key               = each.value.hash_key
-  range_key              = coalesce(each.value.range_key, null)
-  global_secondary_index = coalesce(each.value.global_secondary_index, null)
+  name                     = each.value.name
+  hash_key                 = each.value.hash_key
+  range_key                = coalesce(each.value.range_key, null)
+  global_secondary_indexes = coalesce(each.value.global_secondary_indexes, null)
 
   deletion_protection_enabled = each.value.deletion_protection_enabled
 }
