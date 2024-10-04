@@ -1,4 +1,5 @@
 import { $object, $record, $string } from '@skyleague/therefore'
+import { monitoring } from './monitoring/apigateway.schema.js'
 
 export const starchart = $object({
     project: $object({
@@ -7,6 +8,8 @@ export const starchart = $object({
     }),
 
     params: $record($record($string())).optional().describe('The parameters to be used when rendering the handler definition.'),
+
+    monitoring: monitoring.optional(),
 
     stacks: $record(
         $object({

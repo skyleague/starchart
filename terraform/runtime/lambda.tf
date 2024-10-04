@@ -6,28 +6,28 @@ variable "lambda" {
 module "lambda_settings" {
   source = "./lambda-settings"
 
-  runtime     = try(local.starchart.stack.lambda.runtime, var.lambda.runtime)
-  memory_size = try(local.starchart.stack.lambda.memorySize, var.lambda.memory_size, 1024)
-  timeout     = try(local.starchart.stack.lambda.timeout, var.lambda.timeout, 20)
-  handler     = try(local.starchart.stack.lambda.handler, var.lambda.handler, null)
-  vpc_config  = try(local.starchart.stack.lambda.vpcConfig, var.lambda.vpc_config, null)
+  runtime     = coalesce(local.config.stack.lambda.runtime, try(var.lambda.runtime, null))
+  memory_size = try(coalesce(local.config.stack.lambda.memory_size, try(var.lambda.memory_size, null)), null)
+  timeout     = try(coalesce(local.config.stack.lambda.timeout, try(var.lambda.timeout, null)), null)
+  handler     = try(coalesce(local.config.stack.lambda.handler, try(var.lambda.handler, null)), null)
+  vpc_config  = try(coalesce(local.config.stack.lambda.vpc_config, try(var.lambda.vpc_config, null)), null)
 
 
   environment = merge(
-    try(local.starchart.stack.lambda.environment, {}),
+    coalesce(local.config.stack.lambda.environment, {}),
     try(var.lambda.environment, {})
   )
   inline_policies = merge(
-    try(local.starchart.stack.lambda.inlinePolicies, {}),
+    coalesce(local.config.stack.lambda.inline_policies, {}),
     try(var.lambda.inline_policies, {})
   )
 
-  functions_dir   = try(var.lambda.functions_dir, local.starchart.stack.path)
-  function_prefix = try(var.lambda.function_prefix, "${local.config.stack}-")
+  functions_dir   = try(var.lambda.functions_dir, local.config.stack.path)
+  function_prefix = try(var.lambda.function_prefix, "${local.config.stack_name}-")
   handler_file    = try(var.lambda.handler_file, null)
 
 
-  local_artifact = try(local.starchart.stack.lambda.localArtifact, var.lambda.local_artifact, {})
+  local_artifact = coalesce(local.config.stack.lambda.local_artifact, try(var.lambda.local_artifact, {}))
 }
 
 locals {
@@ -67,7 +67,7 @@ module "lambda" {
   memory_size = coalesce(each.value.memory_size, module.lambda_settings.memory_size)
   timeout     = coalesce(each.value.timeout, module.lambda_settings.timeout)
   handler     = coalesce(each.value.handler, module.lambda_settings.handler)
-  vpc_config  = try(each.value.vpc_config, module.lambda_settings.vpc_config, null)
+  vpc_config  = try(coalesce(each.value.vpc_config, module.lambda_settings.vpc_config), null)
 
   environment     = merge(module.lambda_settings.environment, each.value.environment)
   inline_policies = merge(module.lambda_settings.inline_policies, each.value.inline_policies)

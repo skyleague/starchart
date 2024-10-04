@@ -1,6 +1,7 @@
 module "common" {
   source = "../modules/_common"
 
+  bootstrap    = local.starchart.bootstrap
   config       = local.starchart.config
   default_tags = local.starchart.default_tags
 }
@@ -10,7 +11,6 @@ locals {
   bootstrap  = local.starchart.bootstrap
   persistent = local.starchart.persistent
 }
-
 
 # output "output" {
 #   value = var.starchart

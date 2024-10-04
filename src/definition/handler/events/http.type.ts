@@ -4,6 +4,8 @@
  */
 /* eslint-disable */
 
+import type { ApigatewayMonitoringMetric } from '../../monitoring/apigateway.type.js'
+
 export interface HttpTrigger {
     /**
      * Subscribes to an HTTP route.
@@ -29,5 +31,9 @@ export interface HttpTrigger {
                   scopes?: string[] | undefined
               }
             | undefined
+        /**
+         * The monitoring configuration for the route.
+         */
+        monitoring?: ApigatewayMonitoringMetric | undefined
     }
 }
