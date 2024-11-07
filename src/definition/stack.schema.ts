@@ -1,6 +1,6 @@
 import { $boolean, $const, $intersection, $number, $object, $record, $string, $union } from '@skyleague/therefore'
 import { starChartHandler } from './handler.schema.js'
-import { apigatewayMonitoring } from './monitoring/metrics.schema.js'
+import { apigatewayMonitoring, lambdaMonitoring } from './monitoring/metrics.schema.js'
 import { securityScheme, servers } from './openapi.schema.js'
 
 export const requestAuthorizer = $intersection([
@@ -86,6 +86,7 @@ export const stack = $object({
             .optional()
             .default('handler.yml')
             .describe('The name of the file containing the handler definition.'),
+        monitoring: lambdaMonitoring.optional().describe('The monitoring configuration for the Lambda functions.'),
     })
         .optional()
         .default({})

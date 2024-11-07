@@ -4,7 +4,7 @@
  */
 /* eslint-disable */
 
-import type { ApigatewayMonitoring } from './monitoring/metrics.type.js'
+import type { ApigatewayMonitoring, LambdaMonitoring } from './monitoring/metrics.type.js'
 import type { SecurityScheme, Servers } from './openapi.type.js'
 import StackSchema from './schemas/stack.schema.json' with { type: 'json' }
 
@@ -266,6 +266,10 @@ export interface Stack {
                * @default 'handler.yml'
                */
               handlerFile?: string | undefined
+              /**
+               * The monitoring configuration for the Lambda functions.
+               */
+              monitoring?: LambdaMonitoring | undefined
           }
         | undefined
     /**

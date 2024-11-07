@@ -161,6 +161,10 @@
           "type": "string",
           "description": "The name of the file containing the handler definition.",
           "default": "handler.yml"
+        },
+        "monitoring": {
+          "description": "The monitoring configuration for the Lambda functions.",
+          "$ref": "#/$defs/LambdaMonitoring"
         }
       },
       "additionalProperties": true
@@ -724,6 +728,54 @@
           "additionalProperties": true
         }
       ]
+    },
+    "LambdaMonitoring": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "$ref": "#/$defs/LambdaMonitoringMetric"
+        },
+        "function": {
+          "$ref": "#/$defs/LambdaMonitoringMetric"
+        }
+      },
+      "additionalProperties": true
+    },
+    "LambdaMonitoringMetric": {
+      "type": "object",
+      "properties": {
+        "asyncEventAge": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "asyncEventsDropped": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "asyncEventsReceived": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "claimedAccountConcurrency": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "concurrentExecutions": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "duration": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "errors": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "invocations": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "throttles": {
+          "$ref": "#/$defs/DefaultMetric"
+        },
+        "unreservedConcurrentExecutions": {
+          "$ref": "#/$defs/DefaultMetric"
+        }
+      },
+      "additionalProperties": true
     },
     "Servers": {
       "type": "array",
