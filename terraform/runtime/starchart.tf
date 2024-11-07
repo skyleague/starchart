@@ -56,7 +56,7 @@ variable "starchart" {
       }), {})
     })), {})
     stack = any
-    param = any
+    param = optional(any)
   })
 }
 
