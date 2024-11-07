@@ -1,5 +1,5 @@
 import { $object, $record, $string } from '@skyleague/therefore'
-import { monitoring } from './monitoring/apigateway.schema.js'
+import { monitoring } from './monitoring/monitoring.schema.js'
 
 export const starchart = $object({
     project: $object({

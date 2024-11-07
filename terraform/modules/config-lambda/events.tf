@@ -44,6 +44,7 @@ locals {
                     threshold          = try(config.threshold, null)
                     period             = try(config.period, null)
                     evaluation_periods = try(config.evaluationPeriods, null)
+                    datapoints_to_alarm = try(config.datapointsToAlarm, null)
                   } : key => value if value != null
                 } if config != null
               }

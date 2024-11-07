@@ -42,6 +42,7 @@ output "monitoring" {
               threshold          = try(value.threshold, null)
               period             = try(value.period, null)
               evaluation_periods = try(value.evaluationPeriods, null)
+              datapoints_to_alarm = try(value.datapointsToAlarm, null)
             }
           }
           anomaly = {
@@ -93,6 +94,7 @@ output "stack" {
                 threshold          = try(value.threshold, null)
                 period             = try(value.period, null)
                 evaluation_periods = try(value.evaluationPeriods, null)
+                datapoints_to_alarm = try(value.datapointsToAlarm, null)
               }
             }
             anomaly = {
@@ -135,6 +137,7 @@ output "stack" {
                 threshold          = try(value.threshold, null)
                 period             = try(value.period, null)
                 evaluation_periods = try(value.evaluationPeriods, null)
+                datapoints_to_alarm = try(value.datapointsToAlarm, null)
               }
             }
             anomaly = {

@@ -12,6 +12,91 @@ export interface AnomalyMetric {
     metricPeriod?: number | undefined
 }
 
+export interface ApigatewayMonitoring {
+    route?: ApigatewayMonitoringMetric | undefined
+    api?: ApigatewayMonitoringMetric | undefined
+}
+
+export interface ApigatewayMonitoringMetric {
+    latency?: DefaultMetric | undefined
+    integrationLatency?: DefaultMetric | undefined
+    '5xx'?: DefaultMetric | undefined
+    '4xx'?: DefaultMetric | undefined
+    dataProcessed?: DefaultMetric | undefined
+    count?: DefaultMetric | undefined
+}
+
+export interface DefaultMetric {
+    static?:
+        | {
+              average?: StaticMetric | undefined
+              sum?: StaticMetric | undefined
+              minimum?: StaticMetric | undefined
+              maximum?: StaticMetric | undefined
+              sampleCount?: StaticMetric | undefined
+              iqm?: StaticMetric | undefined
+              p80?: StaticMetric | undefined
+              tm80?: StaticMetric | undefined
+              tc80?: StaticMetric | undefined
+              wm80?: StaticMetric | undefined
+              p90?: StaticMetric | undefined
+              tm90?: StaticMetric | undefined
+              tc90?: StaticMetric | undefined
+              wm90?: StaticMetric | undefined
+              p95?: StaticMetric | undefined
+              tm95?: StaticMetric | undefined
+              tc95?: StaticMetric | undefined
+              wm95?: StaticMetric | undefined
+              p99?: StaticMetric | undefined
+              tm99?: StaticMetric | undefined
+              tc99?: StaticMetric | undefined
+              wm99?: StaticMetric | undefined
+          }
+        | undefined
+    anomaly?:
+        | {
+              average?: AnomalyMetric | undefined
+              sum?: AnomalyMetric | undefined
+              minimum?: AnomalyMetric | undefined
+              maximum?: AnomalyMetric | undefined
+              sampleCount?: AnomalyMetric | undefined
+              iqm?: AnomalyMetric | undefined
+              p80?: AnomalyMetric | undefined
+              tm80?: AnomalyMetric | undefined
+              tc80?: AnomalyMetric | undefined
+              wm80?: AnomalyMetric | undefined
+              p90?: AnomalyMetric | undefined
+              tm90?: AnomalyMetric | undefined
+              tc90?: AnomalyMetric | undefined
+              wm90?: AnomalyMetric | undefined
+              p95?: AnomalyMetric | undefined
+              tm95?: AnomalyMetric | undefined
+              tc95?: AnomalyMetric | undefined
+              wm95?: AnomalyMetric | undefined
+              p99?: AnomalyMetric | undefined
+              tm99?: AnomalyMetric | undefined
+              tc99?: AnomalyMetric | undefined
+              wm99?: AnomalyMetric | undefined
+          }
+        | undefined
+}
+
+export interface SqsMonitoring {
+    queue?: SqsMonitoringMetric | undefined
+    dlq?: SqsMonitoringMetric | undefined
+}
+
+export interface SqsMonitoringMetric {
+    numberOfMessagesSent?: DefaultMetric | undefined
+    approximateNumberOfMessagesVisible?: DefaultMetric | undefined
+    approximateNumberOfMessagesDelayed?: DefaultMetric | undefined
+    approximateAgeOfOldestMessage?: DefaultMetric | undefined
+    approximateNumberOfMessagesNotVisible?: DefaultMetric | undefined
+    numberOfMessagesDeleted?: DefaultMetric | undefined
+    numberOfMessagesReceived?: DefaultMetric | undefined
+    numberOfEmptyReceives?: DefaultMetric | undefined
+}
+
 export interface StaticMetric {
     enabled?: boolean | undefined
     threshold?: number | undefined
