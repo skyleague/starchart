@@ -5,26 +5,26 @@ variable "http_api" {
 }
 
 module "http_api_settings" {
-  count  = var.http_api != null || try(local.starchart.stack.httpApi, null) != null ? 1 : 0
+  count  = var.http_api != null || try(local.config.stack.http_api, null) != null ? 1 : 0
   source = "./http-api-settings"
 
-  name = try(var.http_api.defer_deployment, local.starchart.stack.httpApi.deferDeployment, null) ? local.starchart.config.project_name : try(var.http_api.name, local.starchart.stack.httpApi.name, local.config.stack)
+  name = try(var.http_api.defer_deployment, local.config.stack.http_api.defer_deployment, null) ? local.starchart.config.project_name : try(var.http_api.name, local.config.stack.http_api.name, local.config.stack_name)
 
-  definition                   = try(var.http_api.definition, local.starchart.stack.httpApi.definition, {})
-  defer_deployment             = try(var.http_api.defer_deployment, local.starchart.stack.httpApi.deferDeployment, null)
-  disable_execute_api_endpoint = try(var.http_api.disable_execute_api_endpoint, local.starchart.stack.httpApi.disableExecuteApiEndpoint, null)
+  definition                   = try(var.http_api.definition, local.config.stack.http_api.definition, {})
+  defer_deployment             = try(var.http_api.defer_deployment, local.config.stack.http_api.defer_deployment, null)
+  disable_execute_api_endpoint = try(var.http_api.disable_execute_api_endpoint, local.config.stack.http_api.disable_execute_api_endpoint, null)
   request_authorizers = {
     for name, authorizer in merge({
-      for name, authorizer in try(var.http_api.authorizers, local.starchart.stack.httpApi.authorizers, {}) : name => {
+      for name, authorizer in try(var.http_api.authorizers, coalesce(local.config.stack.http_api.authorizers, {})) : name => {
         type            = authorizer.type
-        identity_source = try(authorizer.identitySource, null)
+        identity_source = authorizer.identity_source
 
-        ttl_in_seconds = try(authorizer.ttlInSeconds, null)
-        function_id    = try(authorizer.functionId, null)
-        function_name  = try(authorizer.functionName, null)
+        ttl_in_seconds  = authorizer.ttl_in_seconds
+        function_id     = authorizer.function_id
+        function_name     = authorizer.function_name
 
-        security_scheme = try(authorizer.securityScheme, null)
-      } if try(authorizer.type, "request") == "request"
+        security_scheme = authorizer.security_Scheme
+      } if coalesce(authorizer.type, "request") == "request"
       },
       module.config_lambda.request_authorizers
       ) : name => merge(authorizer, {
@@ -35,18 +35,18 @@ module "http_api_settings" {
     })
   }
   jwt_authorizers = {
-    for name, authorizer in try(var.http_api.authorizers, local.starchart.stack.httpApi.authorizers, {}) : name => {
+    for name, authorizer in try(var.http_api.authorizers, coalesce(local.config.stack.http_api.authorizers, {})) : name => {
       type            = authorizer.type
-      identity_source = try(authorizer.identitySource, null)
-      ttl_in_seconds  = try(authorizer.ttlInSeconds, null)
+      identity_source = authorizer.identity_source
+      ttl_in_seconds  = authorizer.ttl_in_seconds
 
-      issuer   = try(authorizer.issuer, null)
-      audience = try(authorizer.audience, null)
-
-      security_scheme = try(authorizer.securityScheme, null)
-    } if try(authorizer.type, null) == "jwt"
+      issuer          = authorizer.issuer
+      audience        = authorizer.audience
+      
+      security_scheme = authorizer.security_scheme
+    } if authorizer.type == "jwt"
   }
-  default_authorizer = try(var.http_api.default_authorizer, local.starchart.stack.httpApi.defaultAuthorizer, null)
+  default_authorizer = try(var.http_api.default_authorizer, local.config.stack.http_api.default_authorizer, null)
 }
 
 locals {
@@ -69,9 +69,58 @@ locals {
           scopes = try(path_item.authorizer.scopes, null)
         }
 
+        monitoring = {
+          for type, values in {
+            for type in distinct(concat(
+              keys(try(local.config.monitoring.http_api.route, {})),
+              keys(try(local.config.stack.http_api.monitoring.route, {})),
+              keys(try(path_item.monitoring, {}))
+            )) : type => {
+              for subtype in ["static", "anomaly"] : subtype => {
+                for statistic, values in {
+                  for statistic in distinct(concat(
+                    keys(try(local.config.monitoring.http_api.route[type][subtype], {})),
+                    keys(try(local.config.stack.http_api.monitoring.route[type][subtype], {})),
+                    keys(try(path_item.monitoring[type][subtype], {}))
+                  )) :
+                  statistic => merge(
+                    try({ for k, v in local.config.monitoring.http_api.route[type][subtype][statistic] : k => v if v != null }, {}),
+                    try({ for k, v in local.config.stack.http_api.monitoring.route[type][subtype][statistic] : k => v if v != null }, {}),
+                    try({ for k, v in path_item.monitoring[type][subtype][statistic] : k => v if v != null }, {})
+                  )
+                } : statistic => values if length(values) > 0
+              }
+            }
+          }: type => values if length(values) > 0
+        }
         security = try(path_item.security, null)
       }
     })
+  })
+  http_api_monitoring = merge({
+    for type, type_values in {
+      for type in distinct(concat(
+        keys(try(local.config.monitoring.http_api.api, {})),
+        keys(try(local.config.stack.http_api.monitoring.api, {}))
+      )) : type => {
+        for subtype in ["static", "anomaly"] : subtype => {
+          for statistic, values in {
+            for statistic in distinct(concat(
+              keys(try(local.config.monitoring.http_api.api[type][subtype], {})),
+              keys(try(local.config.stack.http_api.monitoring.api[type][subtype], {}))
+            )) :
+            statistic => merge(
+              try({ for k, v in local.config.monitoring.http_api.api[type][subtype][statistic] : k => v if v != null }, {}),
+              try({ for k, v in local.config.stack.http_api.monitoring.api[type][subtype][statistic] : k => v if v != null }, {}),
+            )
+          } : statistic => values if length(values) > 0
+        }
+      }
+    } : type => {
+      for subtype, subtype_values in type_values : subtype => subtype_values if length(subtype_values) > 0
+    } if type != "actions" && length(type_values) > 0
+  }, {
+    actions = try(local.config.monitoring.actions, { ok = [], alarm = [] })
   })
 }
 
@@ -84,6 +133,7 @@ module "http_api" {
   region     = local.starchart.aws_region
   account_id = local.starchart.aws_account_id
   definition = local.http_api_definition
+  monitoring = local.http_api_monitoring
 
   request_authorizers = module.http_api_settings[0].request_authorizers
   jwt_authorizers     = module.http_api_settings[0].jwt_authorizers
@@ -113,6 +163,7 @@ output "deferred_http_api_input" {
     region     = local.starchart.aws_region
     account_id = local.starchart.aws_account_id
     definition = local.http_api_definition
+    monitoring = local.http_api_monitoring
 
     request_authorizers = module.http_api_settings[0].request_authorizers
     jwt_authorizers     = module.http_api_settings[0].jwt_authorizers

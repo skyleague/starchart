@@ -4,6 +4,7 @@
  */
 /* eslint-disable */
 
+import type { ApigatewayMonitoring } from './monitoring/apigateway.type.js'
 import type { SecurityScheme, Servers } from './openapi.type.js'
 import StackSchema from './schemas/stack.schema.json' with { type: 'json' }
 
@@ -42,6 +43,10 @@ export interface Apigateway {
               scopes?: string[] | undefined
           }
         | undefined
+    /**
+     * The monitoring configuration for the API.
+     */
+    monitoring?: ApigatewayMonitoring | undefined
 }
 
 export type HttpApiRequestAuthorizer = RequestAuthorizer & {
@@ -157,6 +162,10 @@ export interface Stack {
                     }
                   | undefined
               /**
+               * The monitoring configuration for the API.
+               */
+              monitoring?: ApigatewayMonitoring | undefined
+              /**
                * Map of authorizers for the API.
                *
                * @default {  }
@@ -201,6 +210,10 @@ export interface Stack {
                         scopes?: string[] | undefined
                     }
                   | undefined
+              /**
+               * The monitoring configuration for the API.
+               */
+              monitoring?: ApigatewayMonitoring | undefined
               /**
                * Map of authorizers for the API.
                *

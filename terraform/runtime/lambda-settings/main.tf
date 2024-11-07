@@ -5,11 +5,13 @@ variable "runtime" {
 
 variable "memory_size" {
   type     = number
+  default  =  1024
   nullable = false
 }
 
 variable "timeout" {
   type     = number
+  default  =  20
   nullable = false
 }
 

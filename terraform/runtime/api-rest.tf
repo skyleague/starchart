@@ -5,26 +5,26 @@ variable "rest_api" {
 }
 
 module "rest_api_settings" {
-  count  = var.rest_api != null || try(local.starchart.stack.restApi, null) != null ? 1 : 0
+  count  = var.rest_api != null || try(local.config.stack.rest_api, null) != null ? 1 : 0
   source = "./rest-api-settings"
 
-  name                         = try(var.rest_api.defer_deployment, local.starchart.stack.restApi.deferDeployment, null) ? local.starchart.config.project_name : try(var.rest_api.name, local.starchart.stack.restApi.name, local.config.stack)
-  definition                   = try(var.rest_api.definition, local.starchart.stack.restApi.definition, {})
-  defer_deployment             = try(var.rest_api.defer_deployment, local.starchart.stack.restApi.deferDeployment, null)
-  disable_execute_api_endpoint = try(var.rest_api.disable_execute_api_endpoint, local.starchart.stack.restApi.disableExecuteApiEndpoint, null)
-
+  name                         = try(var.rest_api.defer_deployment, local.config.stack.rest_api.defer_deployment, null) ? local.starchart.config.project_name : try(var.rest_api.name, local.config.stack.rest_api.name, local.config.stack_name)
+  
+  definition                   = try(var.rest_api.definition, local.config.stack.rest_api.definition, {})
+  defer_deployment             = try(var.rest_api.defer_deployment, local.config.stack.rest_api.defer_deployment, null)
+  disable_execute_api_endpoint = try(var.rest_api.disable_execute_api_endpoint, local.config.stack.rest_api.disable_execute_api_endpoint, null)
   request_authorizers = {
     for name, authorizer in merge({
-      for name, authorizer in try(var.http_api.authorizers, local.starchart.stack.httpApi.authorizers, {}) : name => {
+      for name, authorizer in try(var.rest_api.authorizers, coalesce(local.config.stack.rest_api.authorizers, {})) : name => {
         type            = authorizer.type
-        identity_source = try(authorizer.identitySource, null)
+        identity_source = authorizer.identity_source
 
-        ttl_in_seconds = try(authorizer.ttlInSeconds, null)
-        function_id    = try(authorizer.functionId, null)
-        function_name  = try(authorizer.functionName, null)
+        ttl_in_seconds  = authorizer.ttl_in_seconds
+        function_id     = authorizer.function_id
+        function_name     = authorizer.function_name
 
-        security_scheme = try(authorizer.securityScheme, null)
-      } if try(authorizer.type, "request") == "request"
+        security_scheme = authorizer.security_Scheme
+      } if coalesce(authorizer.type, "request") == "request"
       },
       module.config_lambda.request_authorizers
       ) : name => merge(authorizer, {
@@ -34,8 +34,7 @@ module "rest_api_settings" {
         )
     })
   }
-  default_authorizer = try(var.rest_api.default_authorizer, local.starchart.stack.restApi.defaultAuthorizer, null)
-
+  default_authorizer = try(var.rest_api.default_authorizer, local.starchart.stack.restApi.default_authorizer, null)
 }
 
 locals {
@@ -59,9 +58,58 @@ locals {
           scopes = try(path_item.authorizer.scopes, null)
         }
 
+        monitoring = {
+          for type, values in {
+            for type in distinct(concat(
+              keys(try(local.config.monitoring.rest_api.route, {})),
+              keys(try(local.config.stack.rest_api.monitoring.route, {})),
+              keys(try(path_item.monitoring, {}))
+            )) : type => {
+              for subtype in ["static", "anomaly"] : subtype => {
+                for statistic, values in {
+                  for statistic in distinct(concat(
+                    keys(try(local.config.monitoring.rest_api.route[type][subtype], {})),
+                    keys(try(local.config.stack.rest_api.monitoring.route[type][subtype], {})),
+                    keys(try(path_item.monitoring[type][subtype], {}))
+                  )) :
+                  statistic => merge(
+                    try({ for k, v in local.config.monitoring.rest_api.route[type][subtype][statistic] : k => v if v != null }, {}),
+                    try({ for k, v in local.config.stack.rest_api.monitoring.route[type][subtype][statistic] : k => v if v != null }, {}),
+                    try({ for k, v in path_item.monitoring[type][subtype][statistic] : k => v if v != null }, {})
+                  )
+                } : statistic => values if length(values) > 0
+              }
+            }
+          }: type => values if length(values) > 0
+        }
         security = try(path_item.security, null)
       }
     })
+  })
+  rest_api_monitoring = merge({
+    for type, type_values in {
+      for type in distinct(concat(
+        keys(try(local.config.monitoring.rest_api.api, {})),
+        keys(try(local.config.stack.rest_api.monitoring.api, {}))
+      )) : type => {
+        for subtype in ["static", "anomaly"] : subtype => {
+          for statistic, values in {
+            for statistic in distinct(concat(
+              keys(try(local.config.monitoring.rest_api.api[type][subtype], {})),
+              keys(try(local.config.stack.rest_api.monitoring.api[type][subtype], {}))
+            )) :
+            statistic => merge(
+              try({ for k, v in local.config.monitoring.rest_api.api[type][subtype][statistic] : k => v if v != null }, {}),
+              try({ for k, v in local.config.stack.rest_api.monitoring.api[type][subtype][statistic] : k => v if v != null }, {}),
+            )
+          } : statistic => values if length(values) > 0
+        }
+      }
+    } : type => {
+      for subtype, subtype_values in type_values : subtype => subtype_values if length(subtype_values) > 0
+    } if type != "actions" && length(type_values) > 0
+  }, {
+    actions = try(local.config.monitoring.actions, { ok = [], alarm = [] })
   })
 }
 
@@ -74,6 +122,7 @@ module "rest_api" {
   region     = local.starchart.aws_region
   account_id = local.starchart.aws_account_id
   definition = local.rest_api_definition
+  monitoring = local.rest_api_monitoring
 
   request_authorizers = module.rest_api_settings[0].request_authorizers
 
@@ -103,7 +152,8 @@ output "deferred_rest_api_input" {
     region     = local.starchart.aws_region
     account_id = local.starchart.aws_account_id
     definition = local.rest_api_definition
-
+    monitoring = local.rest_api_monitoring
+    
     request_authorizers = module.rest_api_settings[0].request_authorizers
 
     disable_execute_api_endpoint = module.rest_api_settings[0].disable_execute_api_endpoint

@@ -28,6 +28,9 @@
         }
       }
     },
+    "monitoring": {
+      "$ref": "#/$defs/Monitoring"
+    },
     "stacks": {
       "type": "object",
       "description": "The stacks to deploy.",
@@ -45,5 +48,244 @@
     }
   },
   "required": ["project", "stacks"],
-  "additionalProperties": true
+  "additionalProperties": true,
+  "$defs": {
+    "Monitoring": {
+      "type": "object",
+      "properties": {
+        "httpApi": {
+          "$ref": "#/$defs/ApigatewayMonitoring"
+        },
+        "restApi": {
+          "$ref": "#/$defs/ApigatewayMonitoring"
+        }
+      },
+      "additionalProperties": true
+    },
+    "ApigatewayMonitoring": {
+      "type": "object",
+      "properties": {
+        "route": {
+          "$ref": "#/$defs/ApigatewayMonitoringMetric"
+        },
+        "api": {
+          "$ref": "#/$defs/ApigatewayMonitoringMetric"
+        }
+      },
+      "additionalProperties": true
+    },
+    "ApigatewayMonitoringMetric": {
+      "type": "object",
+      "properties": {
+        "latency": {
+          "$ref": "#/$defs/ApigatewayMetric"
+        },
+        "integrationLatency": {
+          "$ref": "#/$defs/ApigatewayMetric"
+        },
+        "5xx": {
+          "$ref": "#/$defs/ApigatewayMetric"
+        },
+        "4xx": {
+          "$ref": "#/$defs/ApigatewayMetric"
+        },
+        "dataProcessed": {
+          "$ref": "#/$defs/ApigatewayMetric"
+        },
+        "count": {
+          "$ref": "#/$defs/ApigatewayMetric"
+        }
+      },
+      "additionalProperties": true
+    },
+    "ApigatewayMetric": {
+      "type": "object",
+      "properties": {
+        "static": {
+          "type": "object",
+          "properties": {
+            "average": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "sum": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "minimum": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "maximum": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "sampleCount": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "iqm": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "p80": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "tm80": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "tc80": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "wm80": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "p90": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "tm90": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "tc90": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "wm90": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "p95": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "tm95": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "tc95": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "wm95": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "p99": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "tm99": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "tc99": {
+              "$ref": "#/$defs/StaticMetric"
+            },
+            "wm99": {
+              "$ref": "#/$defs/StaticMetric"
+            }
+          },
+          "additionalProperties": true
+        },
+        "anomaly": {
+          "type": "object",
+          "properties": {
+            "average": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "sum": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "minimum": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "maximum": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "sampleCount": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "iqm": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "p80": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "tm80": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "tc80": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "wm80": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "p90": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "tm90": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "tc90": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "wm90": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "p95": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "tm95": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "tc95": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "wm95": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "p99": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "tm99": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "tc99": {
+              "$ref": "#/$defs/AnomalyMetric"
+            },
+            "wm99": {
+              "$ref": "#/$defs/AnomalyMetric"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "StaticMetric": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "threshold": {
+          "type": "number"
+        },
+        "period": {
+          "type": "number"
+        },
+        "evaluationPeriods": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": true
+    },
+    "AnomalyMetric": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "evaluationPeriods": {
+          "type": "number"
+        },
+        "datapointsToAlarm": {
+          "type": "number"
+        },
+        "bandWidthStandardDeviations": {
+          "type": "number"
+        },
+        "metricPeriod": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
 }
