@@ -5,7 +5,7 @@ module "config_sqs" {
   handler_file  = module.lambda_settings.handler_file
 
   eventbridge_kms_key_id = local.starchart.bootstrap.eventing_kms_key_arn
-  persistent_queues      = local.starchart.persistent.sqs
+  persistent_queues      = try(local.starchart.persistent.sqs, null)
 }
 
 module "sqs" {

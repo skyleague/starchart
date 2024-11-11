@@ -6,8 +6,7 @@
   "properties": {
     "handler": {
       "type": "string",
-      "description": "The name of the handler function to invoke.",
-      "default": "index.handler"
+      "description": "The name of the handler function to invoke."
     },
     "functionId": {
       "type": "string",
@@ -88,7 +87,17 @@
     },
     "inlinePolicies": {
       "type": "array",
-      "items": {}
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "additionalProperties": true
+          },
+          {
+            "type": "string"
+          }
+        ]
+      }
     },
     "runtime": {
       "enum": ["nodejs18.x", "nodejs20.x", "python3.8", "python3.9", "python3.10"]

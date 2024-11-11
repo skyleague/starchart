@@ -125,7 +125,7 @@ variable "stack" {
       handler = optional(string)
       vpcConfig = optional(string)
       environment = optional(map(string))
-      inlinePolicies = optional(map(object({ json = string })))
+      inlinePolicies = optional(any)
       functionsDir = optional(string)
       functionPrefix = optional(string)
       handlerFile = optional(string)

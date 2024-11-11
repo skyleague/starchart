@@ -1,4 +1,4 @@
-import { $enum, $number, $object, $optional, $record, $ref, $string, $unknown } from '@skyleague/therefore'
+import { $enum, $number, $object, $optional, $record, $ref, $string, $union, $unknown } from '@skyleague/therefore'
 import { events } from './handler/events/index.schema.js'
 import { scheduledTriggerEntry } from './handler/events/scheduled.schema.js'
 import { publishes } from './handler/publishes/index.schema.js'
@@ -6,7 +6,7 @@ import { resources } from './handler/resources/index.schema.js'
 import { securityScheme } from './openapi.schema.js'
 
 export const starChartHandler = $object({
-    handler: $string().optional().default('index.handler').describe('The name of the handler function to invoke.'),
+    handler: $string().optional().describe('The name of the handler function to invoke.'),
     functionId: $string().optional().describe('The ID of the function. Defaults to the name of the folder.'),
     functionName: $string().optional().describe('The name of the function. Defaults to the function ID.'),
     environment: $record($string()).optional().describe('The environment variables to set for the handler.'),
@@ -20,7 +20,9 @@ export const starChartHandler = $object({
     publishes: $ref(publishes).optional(),
     resources: $ref(resources).optional(),
 
-    inlinePolicies: $unknown().array().optional(),
+    inlinePolicies: $union([$record($unknown), $string])
+        .array()
+        .optional(),
     runtime: $enum(['nodejs18.x', 'nodejs20.x', 'python3.8', 'python3.9', 'python3.10']).optional(),
     memorySize: $number().optional(),
     timeout: $number().optional(),

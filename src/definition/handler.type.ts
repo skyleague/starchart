@@ -19,8 +19,6 @@ import type { DefinedError } from 'ajv'
 export interface StarChartHandler {
     /**
      * The name of the handler function to invoke.
-     *
-     * @default 'index.handler'
      */
     handler?: string | undefined
     /**
@@ -96,7 +94,14 @@ export interface StarChartHandler {
     events?: Events | undefined
     publishes?: Publishes | undefined
     resources?: Resources | undefined
-    inlinePolicies?: unknown[] | undefined
+    inlinePolicies?:
+        | (
+              | {
+                    [k: string]: unknown
+                }
+              | string
+          )[]
+        | undefined
     runtime?: 'nodejs18.x' | 'nodejs20.x' | 'python3.8' | 'python3.9' | 'python3.10' | undefined
     memorySize?: number | undefined
     timeout?: number | undefined

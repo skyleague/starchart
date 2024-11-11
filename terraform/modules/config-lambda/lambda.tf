@@ -33,7 +33,11 @@ locals {
       )
 
       inline_policies = merge(
-        { for k in try(_definition.inlinePolicies, []) : k => try(var.inline_policies[k], null) },
+        { for k in try(_definition.inlinePolicies, []) : (
+          can(tostring(k)) ? jsonencode(k) : keys(k)[0]
+        ) => (
+          can(tostring(k)) ? try(var.inline_policies[k], null) : {json = jsonencode(values(k)[0])}
+        ) },
         length(try(local.publishes[function_id].eventbridge, [])) == 0 ? {} : {
           starchart_eventbridge_publish = data.aws_iam_policy_document.eventbridge_publish[function_id]
         },

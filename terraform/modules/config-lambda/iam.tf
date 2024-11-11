@@ -1,6 +1,8 @@
 resource "null_resource" "policy_validation" {
   for_each = toset(flatten([
-    for function_id, definition in local.handlers : try(definition.inlinePolicies, [])
+    for function_id, definition in local.handlers : [
+      for policy in try(definition.inlinePolicies, []) : policy if can(tostring(policy))
+    ]
   ]))
 
   triggers = {

@@ -17,10 +17,12 @@ module "lambda_settings" {
     coalesce(local.config.stack.lambda.environment, {}),
     try(var.lambda.environment, {})
   )
-  inline_policies = merge(
-    coalesce(local.config.stack.lambda.inline_policies, {}),
-    try(var.lambda.inline_policies, {})
-  )
+  inline_policies = {
+    for name, policy in merge(
+      coalesce(local.config.stack.lambda.inline_policies, {}),
+      try(var.lambda.inline_policies, {})
+    ) : name => {json = try(policy.json, jsonencode(policy)) }
+  }
 
   functions_dir   = try(var.lambda.functions_dir, local.config.stack.path)
   function_prefix = try(var.lambda.function_prefix, "${local.config.stack_name}-")

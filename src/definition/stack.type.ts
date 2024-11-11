@@ -238,8 +238,6 @@ export interface Stack {
               timeout?: number | undefined
               /**
                * The name of the handler function to invoke.
-               *
-               * @default 'index.handler'
                */
               handler?: string | undefined
               vpcConfig?: string | undefined
@@ -251,7 +249,14 @@ export interface Stack {
                         [k: string]: string | undefined
                     }
                   | undefined
-              inlinePolicies?: unknown[] | undefined
+              inlinePolicies?:
+                  | (
+                        | {
+                              [k: string]: unknown
+                          }
+                        | string
+                    )[]
+                  | undefined
               /**
                * The directory containing the functions to be deployed.
                */
