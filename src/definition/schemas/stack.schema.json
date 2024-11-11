@@ -132,8 +132,7 @@
         },
         "handler": {
           "type": "string",
-          "description": "The name of the handler function to invoke.",
-          "default": "index.handler"
+          "description": "The name of the handler function to invoke."
         },
         "vpcConfig": {
           "type": "string"
@@ -147,7 +146,17 @@
         },
         "inlinePolicies": {
           "type": "array",
-          "items": {}
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
         },
         "functionsDir": {
           "type": "string",

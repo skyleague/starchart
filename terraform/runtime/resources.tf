@@ -23,28 +23,28 @@ variable "resources" {
 
 locals {
   _resources = {
-    secret = merge(local.persistent.secret, coalesce(var.resources.secret, {}), [
+    secret = merge(try(local.persistent.secret, {}), coalesce(var.resources.secret, {}), [
       for stack, starchart in local.starchart.stacks : {
         for id, resource in starchart.persistent.secret : "${stack}:${id}" => resource
       }]...
     )
-    ssm_parameter = merge(local.persistent.ssm_parameter, coalesce(var.resources.ssm_parameter, {}), [
+    ssm_parameter = merge(try(local.persistent.ssm_parameter, {}), coalesce(var.resources.ssm_parameter, {}), [
       for stack, starchart in local.starchart.stacks : {
         for id, resource in starchart.persistent.ssm_parameter : "${stack}:${id}" => resource
     }]...)
-    s3 = merge(local.persistent.s3, coalesce(var.resources.s3, {}), [
+    s3 = merge(try(local.persistent.s3, {}), coalesce(var.resources.s3, {}), [
       for stack, starchart in local.starchart.stacks : {
         for id, resource in starchart.persistent.s3 : "${stack}:${id}" => resource
     }]...)
-    dynamodb = merge(local.persistent.dynamodb, coalesce(var.resources.dynamodb, {}), [
+    dynamodb = merge(try(local.persistent.dynamodb, {}), coalesce(var.resources.dynamodb, {}), [
       for stack, starchart in local.starchart.stacks : {
         for id, resource in starchart.persistent.dynamodb : "${stack}:${id}" => resource
     }]...)
-    eventbridge = merge(local.persistent.eventbridge, coalesce(var.resources.eventbridge, {}), [
+    eventbridge = merge(try(local.persistent.eventbridge, {}), coalesce(var.resources.eventbridge, {}), [
       for stack, starchart in local.starchart.stacks : {
         for id, resource in starchart.persistent.eventbridge : "${stack}:${id}" => resource
     }]...)
-    sqs = merge(local.persistent.sqs, module.sqs, coalesce(var.resources.sqs, {}), [
+    sqs = merge(try(local.persistent.sqs, {}), module.sqs, coalesce(var.resources.sqs, {}), [
       for stack, starchart in local.starchart.stacks : {
         for id, resource in starchart.persistent.sqs : "${stack}:${id}" => resource
     }]...)
