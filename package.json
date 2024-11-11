@@ -36,27 +36,27 @@
     "@aws-sdk/client-iot": "^3.635.0",
     "@aws-sdk/client-lambda": "^3.636.0",
     "@skyleague/axioms": "^4.5.2",
-    "@skyleague/esbuild-lambda": "^5.3.2",
-    "@skyleague/event-horizon": "^10.0.4",
-    "aws-iot-device-sdk-v2": "^1.20.0",
+    "@skyleague/esbuild-lambda": "^5.5.0",
+    "@skyleague/event-horizon": "^10.2.3",
+    "aws-iot-device-sdk-v2": "^1.21.1",
     "better-ajv-errors": "^1.2.0",
     "camelcase": "^8.0.0",
     "find-root": "^1.1.0",
     "globby": "^14.0.2",
     "js-yaml": "^4.1.0",
-    "pino-pretty": "^11.2.2",
-    "tsx": "^4.17.0",
-    "yaml": "^2.5.0",
+    "pino-pretty": "^11.3.0",
+    "tsx": "^4.19.2",
+    "yaml": "^2.6.0",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "@skyleague/node-standards": "^8.0.1",
-    "@skyleague/therefore": "^5.10.3",
-    "@types/aws-lambda": "^8.10.143",
+    "@skyleague/node-standards": "^8.1.2",
+    "@skyleague/therefore": "^5.16.3",
+    "@types/aws-lambda": "^8.10.145",
     "@types/find-root": "^1.1.4",
     "@types/js-yaml": "^4.0.9",
     "@types/yargs": "^17.0.33",
-    "typescript": "^5.5.4"
+    "typescript": "^5.6.3"
   },
   "engines": {
     "node": ">=20"
