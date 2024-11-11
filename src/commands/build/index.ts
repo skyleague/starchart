@@ -1,9 +1,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { esbuildLambda, listLambdaHandlers, zipHandlers } from '@skyleague/esbuild-lambda'
+import { entriesOf, groupBy } from '@skyleague/axioms'
+import { esbuildLambda, zipHandlers } from '@skyleague/esbuild-lambda'
 import type { Argv } from 'yargs'
 import { StarchartConfiguration } from '../../lib/configuration.js'
 import { rootDirectory } from '../../lib/constants.js'
+import { buildPython } from './python.js'
 
 export function builder(yargs: Argv) {
     return yargs
@@ -60,39 +62,45 @@ export async function handler(argv: ReturnType<typeof builder>['argv'], options:
 
     await preBuild?.()
 
-    const stacks = configuration.right?.stacks.map((s) => path.dirname(s.target)) ?? []
-
-    const handlers = (
-        await Promise.all(
-            [
-                ...(options.stacks ?? []),
-                ...stacks.filter((handler) => targetedStacks.includes('*') || targetedStacks.some((t) => handler.includes(t))),
-            ].flatMap(async (fnDir) => listLambdaHandlers(fnDir)),
-        )
-    ).flat()
+    const allHandlers = configuration.right.stacks.flatMap((s) => s.handlers)
+    const groupedHandlers = groupBy(allHandlers, (h) => h.type())
 
     const outbase = rootDirectory
 
-    await esbuildLambda(rootDirectory, {
-        esbuild: {
-            absWorkingDir: rootDirectory,
-            tsconfig: path.join(rootDirectory, 'tsconfig.dist.json'),
-            outbase: rootDirectory,
-        },
-        root: rootDirectory,
-        modulesRoot: rootDirectory,
-        entryPoints: handlers.map((fnDir) => path.join(fnDir, 'index.ts')),
-        outdir: () => buildDir,
-        forceBundle: ({ packageName }) => packageName !== 'aws-crt',
-    })
+    if (groupedHandlers.nodejs) {
+        await esbuildLambda(rootDirectory, {
+            esbuild: {
+                absWorkingDir: rootDirectory,
+                tsconfig: path.join(rootDirectory, 'tsconfig.dist.json'),
+                outbase: rootDirectory,
+            },
+            root: rootDirectory,
+            modulesRoot: rootDirectory,
+            entryPoints: groupedHandlers.nodejs.map((h) => h.endpoint),
+            outdir: () => buildDir,
+            forceBundle: ({ packageName }) => packageName !== 'aws-crt',
+        })
+    }
+
+    if (groupedHandlers.python) {
+        await buildPython(groupedHandlers, buildDir)
+    }
 
     await postBuild?.()
 
-    await zipHandlers(handlers, {
-        outbase,
-        buildDir,
-        artifactDir,
-    })
+    await Promise.all(
+        entriesOf(groupBy(allHandlers, (h) => h.handler.runtime ?? 'nodejs')).map(async ([runtime, handlers]) => {
+            await zipHandlers(
+                handlers.map((h) => h.zipSource()),
+                {
+                    outbase,
+                    buildDir,
+                    artifactDir,
+                    runtime: runtime as 'nodejs20.x',
+                },
+            )
+        }),
+    )
 }
 
 export default {

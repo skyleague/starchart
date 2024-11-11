@@ -19,14 +19,49 @@ export function validationError({
 }
 
 export class HandlerConfiguration {
+    stack: StackConfiguration
     handler: StarChartHandler
     path: string
-    constructor({ handler, path }: { handler: StarChartHandler; path: string }) {
+    endpoint!: string
+    constructor({ handler, path, stack }: { handler: StarChartHandler; path: string; stack: StackConfiguration }) {
         this.handler = handler
         this.path = path
+        this.stack = stack
+
+        if (this.stack.stack?.lambda?.runtime !== undefined) {
+            this.handler.runtime ??= this.stack.stack.lambda.runtime
+        }
+        if (this.stack.stack.lambda?.runtime?.startsWith('nodejs')) {
+            this.handler.handler ??= 'index.handler'
+            this.endpoint = nodePath.join(this.path, `../${this.handler.handler.split('.')[0]}.ts`)
+        } else if (this.stack.stack.lambda?.runtime?.startsWith('python')) {
+            this.handler.handler ??= 'index.handler'
+            this.endpoint = nodePath.join(this.path, `../${this.handler.handler.split('.')[0]}.py`)
+        }
     }
 
-    public static async load({ path }: { path: string; stack: StackConfiguration }) {
+    public type() {
+        if (this.handler.runtime?.startsWith('nodejs')) {
+            return 'nodejs'
+        }
+        if (this.handler.runtime?.startsWith('python')) {
+            return 'python'
+        }
+        return 'unknown'
+    }
+
+    public zipSource() {
+        return nodePath.dirname(this.path)
+    }
+
+    public async ok() {
+        return fs
+            .stat(this.endpoint)
+            .then((s) => s.isFile())
+            .catch(() => false)
+    }
+
+    public static async load({ path, stack }: { path: string; stack: StackConfiguration }) {
         if (await fs.stat(path).then((s) => s.isFile())) {
             const content = await mapTry(path, (t) => fs.readFile(t))
             const handler = mapTry(content, (c) => yaml.parse(c.toString()))
@@ -39,7 +74,11 @@ export class HandlerConfiguration {
             if ('left' in handlerConfiguration) {
                 return { left: validationError({ schema: StarChartHandler, data: handler, filename: path }) }
             }
-            return { right: new HandlerConfiguration({ handler: handlerConfiguration.right, path }) }
+            const configuration = new HandlerConfiguration({ handler: handlerConfiguration.right, path, stack })
+            if (!(await configuration.ok())) {
+                return { left: new Error('Handler file not found') }
+            }
+            return { right: configuration }
         }
         return { left: new Error('Could not find handler.yml') }
     }
