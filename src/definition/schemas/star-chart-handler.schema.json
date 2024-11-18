@@ -161,6 +161,10 @@
               "type": "string",
               "description": "The HTTP path for the route. Must start with / and must not end with /."
             },
+            "operationId": {
+              "type": "string",
+              "description": "The operation ID for the route."
+            },
             "authorizer": {
               "type": "object",
               "description": "The authorizer to use for the route, this overrides the default authorizer.",
