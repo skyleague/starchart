@@ -5,6 +5,7 @@ export const httpTrigger = $object({
     http: $object({
         method: $enum(['get', 'post', 'put', 'delete', 'patch', 'options', 'head']),
         path: $string().describe('The HTTP path for the route. Must start with / and must not end with /.'),
+        operationId: $string().optional().describe('The operation ID for the route.'),
 
         authorizer: $object({
             name: $string().describe('The name of the authorizer to use for the route.'),

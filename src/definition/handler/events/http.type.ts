@@ -17,6 +17,10 @@ export interface HttpTrigger {
          */
         path: string
         /**
+         * The operation ID for the route.
+         */
+        operationId?: string | undefined
+        /**
          * The authorizer to use for the route, this overrides the default authorizer.
          */
         authorizer?:
