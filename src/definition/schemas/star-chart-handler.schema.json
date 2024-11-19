@@ -165,6 +165,10 @@
               "type": "string",
               "description": "The operation ID for the route."
             },
+            "summary": {
+              "type": "string",
+              "description": "The summary for the route."
+            },
             "authorizer": {
               "type": "object",
               "description": "The authorizer to use for the route, this overrides the default authorizer.",
