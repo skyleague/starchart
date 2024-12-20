@@ -1,0 +1,16 @@
+{
+  "name": "minimal",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "generate:openapi": "node ../../bin/run.js openapi && npx biome format --write foo.openapi.json",
+    "generate:types": "npx therefore -f src --clean",
+    "generate:sdk": "npx therefore -f sdk --clean",
+    "generate": "npm run generate:types && npm run generate:sdk && npm run generate:openapi"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {}
+}

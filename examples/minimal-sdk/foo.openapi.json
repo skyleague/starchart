@@ -1,0 +1,94 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "example-foo - foo",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://localhost/"
+    }
+  ],
+  "components": {
+    "securitySchemes": {},
+    "schemas": {
+      "ErrorResponse": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "HttpError",
+        "type": "object",
+        "description": "The default error error response for both 400 & 500 type errors",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "description": "The status code of the response."
+          },
+          "message": {
+            "type": "string",
+            "description": "A detailed message of the error."
+          }
+        },
+        "required": ["message", "statusCode"],
+        "additionalProperties": true
+      },
+      "FooData": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["message"],
+        "additionalProperties": true
+      },
+      "FooResponse": {
+        "title": "FooResponse",
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FooData"
+          }
+        },
+        "required": ["data"],
+        "additionalProperties": true
+      }
+    },
+    "requestBodies": {},
+    "responses": {
+      "ErrorResponse": {
+        "description": "The default error error response for both 400 & 500 type errors",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "FooResponse": {
+        "description": "",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/FooResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/foo": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/FooResponse"
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+httpApi:
+  deferDeployment: false
+lambda:
+  runtime: nodejs20.x
+  environment:
+    EH_SERVICE_NAME: ${starchart.config.project_name}
+
+    EH_LOGGER_CONTEXT_ENVIRONMENT: ${starchart.config.environment}
+    EH_LOGGER_CONTEXT_STACK: ${starchart.config.stack}
+    EH_APPCONFIG_APPLICATION: ${starchart.bootstrap.appconfig.application.id}
+    EH_APPCONFIG_ENVIRONMENT: ${starchart.persistent.appconfig.environments.default.environment_id}
+    EH_APPCONFIG_NAME: ${starchart.persistent.appconfig.configuration_profiles.default.configuration_profile_id}
+
+openapi:
+  servers:
+    - url: https://localhost/

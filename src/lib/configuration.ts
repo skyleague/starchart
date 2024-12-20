@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import nodePath from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { isFailure, mapTry } from '@skyleague/axioms'
 import type { Schema } from '@skyleague/therefore'
 import betterAjvErrors from 'better-ajv-errors'
@@ -91,7 +92,7 @@ export class HandlerConfiguration {
             return { left: 'Handler file not found' }
         }
         // biome-ignore lint/style/noNonNullAssertion: symbol should be defineds
-        return { right: (await import(handlerFile))[symbolName!] }
+        return { right: (await import(pathToFileURL(handlerFile).href))[symbolName!] }
     }
 }
 

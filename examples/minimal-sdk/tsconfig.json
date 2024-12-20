@@ -1,0 +1,4 @@
+{
+  "extends": "@skyleague/node-standards/tsconfig.base.json",
+  "include": ["src/**/*", "sdk/**/*", "test/**/*", "index.ts"]
+}

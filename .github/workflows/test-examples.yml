@@ -1,0 +1,57 @@
+name: Validate Example generation
+
+on: push
+
+jobs:
+  generate_sdk:
+    strategy:
+      matrix:
+        os: [windows-latest]
+        shell: [pwsh]
+        include:
+          - os: ubuntu-latest
+            shell: bash
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install dependencies in example
+        working-directory: examples/minimal-sdk
+        run: npm ci
+
+      - name: Clean schemas
+        working-directory: examples/minimal-sdk
+        shell: bash
+        run: |
+          rm -rf {src,sdk}/**/schemas;
+          rm -rf {src,sdk}/**/*.type.ts;
+          rm -rf sdk/**/*.client.ts;
+          rm -rf foo.openapi.json;
+
+      # Step 6: Generate types & sdk
+      - name: Generate types & sdk
+        working-directory: examples/minimal-sdk
+        run: npm run generate
+
+      # Step 7: Expect no changes in git
+      - name: Expect no changes
+        shell: bash
+        run: |
+          if git diff --exit-code --ignore-cr-at-eol; then
+            echo "No changes detected"
+          else
+            echo "ERROR: Changes detected. The command executed by the pipeline resulted in changes that should have been made locally before creating a commit."
+            exit 1
+          fi

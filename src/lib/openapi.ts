@@ -43,7 +43,7 @@ export async function openapi({ configuration, cwd }: { configuration: Starchart
                                     ? (x.symbol.request as RequestAuthorizerEventHandler)
                                     : { security: undefined }
                             return {
-                                ...(definition.security as Record<string, unknown> | undefined),
+                                ...(definition.security ?? {}),
                                 ...securitySchemes,
                             }
                         }),
@@ -132,7 +132,7 @@ export async function openapi({ configuration, cwd }: { configuration: Starchart
                     throw new Error(`Failed to generate OpenAPI for stack ${stack.name}: ${JSON.stringify(openapi.left)}`)
                 }
 
-                return [stack.name, openapi.right]
+                return [stack.name, await openapi.right]
             }),
         ),
     )
