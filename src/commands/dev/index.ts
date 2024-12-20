@@ -1,7 +1,6 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { IAM } from '@aws-sdk/client-iam'
 import { type FunctionConfiguration, Lambda, paginateListFunctions } from '@aws-sdk/client-lambda'
 import type { Argv } from 'yargs'
@@ -11,8 +10,6 @@ import { handler as buildHandler } from '../build/index.js'
 import { builder as deployBuilder, handler as deployHandler } from '../deploy/index.js'
 import { type LambdaFunction, patchDebugFunction } from './function.js'
 import { local } from './local.js'
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 function sha256Hash(data: Uint8Array) {
     const hash = crypto.createHash('sha256')
@@ -62,10 +59,10 @@ export async function handler(argv: ReturnType<typeof builder>['argv']): Promise
 
     const hasDebugArtifact = fs.existsSync(debugArtifact) && false
 
-    const remoteLambda = fs.existsSync(`${__dirname}/lambda.ts`)
-        ? fs.readFileSync(`${__dirname}/lambda.ts`).toString()
-        : fs.existsSync(`${__dirname}/lambda.js`)
-          ? fs.readFileSync(`${__dirname}/lambda.js`).toString()
+    const remoteLambda = fs.existsSync(`${import.meta.dirname}/lambda.ts`)
+        ? fs.readFileSync(`${import.meta.dirname}/lambda.ts`).toString()
+        : fs.existsSync(`${import.meta.dirname}/lambda.js`)
+          ? fs.readFileSync(`${import.meta.dirname}/lambda.js`).toString()
           : undefined
     const remoteLambdaContent = [remoteLambda, ' export const handler = proxyHandler()'].join('\n')
 

@@ -1,8 +1,6 @@
 import { fork } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import { dirname } from 'node:path'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { IoT } from '@aws-sdk/client-iot'
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers'
 import { memoize } from '@skyleague/axioms'
@@ -10,8 +8,6 @@ import { iot, mqtt } from 'aws-iot-device-sdk-v2'
 import pinoPretty from 'pino-pretty'
 import { rootDirectory } from '../../lib/constants.js'
 import type { LambdaFunction } from './function.js'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const endpoint = memoize(async () => {
     const _iot = new IoT({})
@@ -53,7 +49,7 @@ export async function local(functions: LambdaFunction[]) {
                     NODE_OPTIONS: `${process.env.NODE_OPTIONS} ${f.configuration.Environment?.Variables?.NODE_OPTIONS ?? ''}`,
                 }
 
-                const child = fork(path.resolve(__dirname, 'handler.js'), [], {
+                const child = fork(path.resolve(import.meta.dirname, 'handler.js'), [], {
                     env,
                     stdio: 'pipe',
                 })

@@ -1,0 +1,5 @@
+handler: index.handler
+events:
+  - http:
+      path: /foo
+      method: get
