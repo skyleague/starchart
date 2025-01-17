@@ -23,7 +23,7 @@ export const starChartHandler = $object({
     inlinePolicies: $union([$record($unknown), $string])
         .array()
         .optional(),
-    runtime: $enum(['nodejs18.x', 'nodejs20.x', 'python3.8', 'python3.9', 'python3.10']).optional(),
+    runtime: $enum(['nodejs18.x', 'nodejs20.x', 'nodejs22.x', 'python3.8', 'python3.9', 'python3.10']).optional(),
     memorySize: $number().optional(),
     timeout: $number().optional(),
     vpcConfig: $string().optional(),
