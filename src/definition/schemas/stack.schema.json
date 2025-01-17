@@ -122,7 +122,7 @@
       "default": {},
       "properties": {
         "runtime": {
-          "enum": ["nodejs18.x", "nodejs20.x", "python3.8", "python3.9", "python3.10"]
+          "enum": ["nodejs18.x", "nodejs20.x", "nodejs22.x", "python3.8", "python3.9", "python3.10"]
         },
         "memorySize": {
           "type": "number"
@@ -790,27 +790,30 @@
       "type": "array",
       "description": "The servers to use for the route.",
       "items": {
-        "type": "object",
-        "properties": {
-          "description": {
-            "type": "string",
-            "description": "The description of the server."
-          },
-          "url": {
-            "type": "string",
-            "description": "The URL of the server."
-          },
-          "variables": {
-            "type": "object",
-            "description": "The variables to pass to the server.",
-            "additionalProperties": {
-              "$ref": "#/$defs/ServerVariable"
-            }
-          }
-        },
-        "required": ["url"],
-        "additionalProperties": true
+        "$ref": "#/$defs/Server"
       }
+    },
+    "Server": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "The description of the server."
+        },
+        "url": {
+          "type": "string",
+          "description": "The URL of the server."
+        },
+        "variables": {
+          "type": "object",
+          "description": "The variables to pass to the server.",
+          "additionalProperties": {
+            "$ref": "#/$defs/ServerVariable"
+          }
+        }
+      },
+      "required": ["url"],
+      "additionalProperties": true
     },
     "ServerVariable": {
       "type": "object",

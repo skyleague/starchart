@@ -233,7 +233,7 @@ export interface Stack {
      */
     lambda?:
         | {
-              runtime?: 'nodejs18.x' | 'nodejs20.x' | 'python3.8' | 'python3.9' | 'python3.10' | undefined
+              runtime?: 'nodejs18.x' | 'nodejs20.x' | 'nodejs22.x' | 'python3.8' | 'python3.9' | 'python3.10' | undefined
               memorySize?: number | undefined
               timeout?: number | undefined
               /**
