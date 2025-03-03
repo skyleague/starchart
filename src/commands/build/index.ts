@@ -1,6 +1,5 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { entriesOf, groupBy } from '@skyleague/axioms'
 import { esbuildLambda, zipHandlers } from '@skyleague/esbuild-lambda'
 import type { Argv } from 'yargs'
 import { StarchartConfiguration } from '../../lib/configuration.js'
@@ -63,7 +62,7 @@ export async function handler(argv: ReturnType<typeof builder>['argv'], options:
     await preBuild?.()
 
     const allHandlers = configuration.right.stacks.flatMap((s) => s.handlers)
-    const groupedHandlers = groupBy(allHandlers, (h) => h.type())
+    const groupedHandlers = Object.groupBy(allHandlers, (h) => h.type())
 
     const outbase = rootDirectory
 
@@ -89,7 +88,7 @@ export async function handler(argv: ReturnType<typeof builder>['argv'], options:
     await postBuild?.()
 
     await Promise.all(
-        entriesOf(groupBy(allHandlers, (h) => h.handler.runtime ?? 'nodejs')).map(async ([runtime, handlers]) => {
+        Object.entries(Object.groupBy(allHandlers, (h) => h.handler.runtime ?? 'nodejs')).map(async ([runtime, handlers]) => {
             await zipHandlers(
                 handlers.map((h) => h.zipSource()),
                 {

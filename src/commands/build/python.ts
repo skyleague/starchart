@@ -6,12 +6,12 @@ import type { HandlerConfiguration, StackConfiguration } from '../../lib/configu
 import { rootDirectory } from '../../lib/constants.js'
 
 export async function buildPython(
-    groupedHandlers: Record<'nodejs' | 'python' | 'unknown', HandlerConfiguration[]>,
+    groupedHandlers: Partial<Record<'nodejs' | 'python' | 'unknown', HandlerConfiguration[]>>,
     buildDir: string,
 ) {
     const seenStacks = new WeakSet()
     const uniqueStacks: StackConfiguration[] = []
-    for (const handler of groupedHandlers.python) {
+    for (const handler of groupedHandlers.python ?? []) {
         if (seenStacks.has(handler.stack)) {
             continue
         }
@@ -53,7 +53,7 @@ export async function buildPython(
 
     // Write requirements.txt for each handler in parallel and install them
     await Promise.all(
-        groupedHandlers.python.map(async (handler) => {
+        (groupedHandlers.python ?? []).map(async (handler) => {
             const handlerDir = path.dirname(handler.path)
             const buildHandlerDir = path.join(buildDir, path.relative(rootDirectory, handlerDir))
             const absoluteStackRoot = path.dirname(handler.stack.target)

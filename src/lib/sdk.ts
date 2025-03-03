@@ -16,22 +16,25 @@ export async function $sdk(
     }
     const openapiDocs = await openapi({ configuration: configuration.right })
 
-    return Object.fromEntries(
-        Object.entries(openapiDocs)
-            .filter(([, value]) => Object.keys(value.paths).length > 0)
-            .map(([key, value]) => {
-                let clientOptions = options[key] ?? options._default ?? options.default
-                if (typeof clientOptions === 'function') {
-                    clientOptions = clientOptions({ key })
-                }
+    const _openapiDocs = await Promise.all(
+        Object.entries(openapiDocs).map(async ([key, _value]) => {
+            const value = await _value
+            if (Object.keys(value.paths).length === 0) {
+                return [key, undefined]
+            }
+            let clientOptions = options[key] ?? options._default ?? options.default
+            if (typeof clientOptions === 'function') {
+                clientOptions = clientOptions({ key })
+            }
 
-                return [
-                    `${key}Client`,
-                    $restclient(value, {
-                        filename: `${key}/rest.client.ts`,
-                        ...clientOptions,
-                    }),
-                ]
-            }),
+            return [
+                `${key}Client`,
+                $restclient(value, {
+                    filename: `${key}/rest.client.ts`,
+                    ...clientOptions,
+                }),
+            ]
+        }),
     )
+    return Object.fromEntries(_openapiDocs.filter(([, value]) => value !== undefined))
 }

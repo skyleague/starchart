@@ -20,47 +20,48 @@
   "scripts": {
     "check:project": "node-standards lint",
     "lint": "biome check",
-    "lint:fix": "npm run lint -- --write --unsafe",
+    "lint:fix": "node --run lint -- --write --unsafe",
     "prepare": "husky || true",
     "build": "tsc -p tsconfig.dist.json",
-    "build:docs": "npx typedoc",
     "check:coverage": "vitest run --coverage=true",
     "check:types": "tsc -p tsconfig.json",
-    "package": "rm -rf .dist && npm run build",
+    "package": "rm -rf .dist && node --run build",
     "prepack": "cp package.json .dist/package.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prebuild:docs": "npm ci"
   },
   "dependencies": {
-    "@aws-sdk/client-iam": "^3.635.0",
-    "@aws-sdk/client-iot": "^3.635.0",
-    "@aws-sdk/client-lambda": "^3.636.0",
-    "@aws-sdk/credential-providers": "^3.635.0",
-    "@skyleague/axioms": "^4.5.2",
-    "@skyleague/esbuild-lambda": "^5.5.0",
-    "@skyleague/event-horizon": "^10.2.3",
+    "@aws-sdk/client-iam": "^3.758.0",
+    "@aws-sdk/client-iot": "^3.758.0",
+    "@aws-sdk/client-lambda": "^3.758.0",
+    "@aws-sdk/credential-providers": "^3.758.0",
+    "@skyleague/axioms": "^6.5.1",
+    "@skyleague/esbuild-lambda": "^6.0.0",
+    "@skyleague/event-horizon": "^13.1.0",
     "aws-iot-device-sdk-v2": "^1.21.1",
     "better-ajv-errors": "^1.2.0",
     "camelcase": "^8.0.0",
     "code-block-writer": "^13.0.3",
     "find-root": "^1.1.0",
-    "globby": "^14.0.2",
+    "globby": "^14.1.0",
     "js-yaml": "^4.1.0",
-    "pino-pretty": "^11.3.0",
-    "tsx": "^4.19.2",
-    "yaml": "^2.6.0",
+    "pino-pretty": "^13.0.0",
+    "tsx": "^4.19.3",
+    "yaml": "^2.7.0",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "@skyleague/node-standards": "^8.1.2",
-    "@skyleague/therefore": "^5.16.3",
-    "@types/aws-lambda": "^8.10.145",
+    "@skyleague/node-standards": "^10.0.1",
+    "@skyleague/therefore": "^7.13.1",
+    "@types/aws-lambda": "^8.10.147",
     "@types/find-root": "^1.1.4",
     "@types/js-yaml": "^4.0.9",
     "@types/yargs": "^17.0.33",
-    "typescript": "^5.6.3"
+    "got": "^14.4.6",
+    "typescript": "^5.8.2"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "publishConfig": {
     "access": "public",
