@@ -43,7 +43,7 @@ export async function openapi({ configuration, cwd }: { configuration: Starchart
                                     ? (x.symbol.request as RequestAuthorizerEventHandler)
                                     : { security: undefined }
                             return {
-                                ...definition.security,
+                                ...(definition.security as Record<string, unknown> | undefined),
                                 ...securitySchemes,
                             }
                         }),
