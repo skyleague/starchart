@@ -1,0 +1,7 @@
+project:
+  name: example-foo
+  identifier: foo
+
+stacks:
+  foo:
+    path: src/foo/

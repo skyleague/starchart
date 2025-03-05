@@ -1,6 +1,5 @@
 import { fork } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import { dirname } from 'node:path'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { IoT } from '@aws-sdk/client-iot'
@@ -11,7 +10,7 @@ import pinoPretty from 'pino-pretty'
 import { rootDirectory } from '../../lib/constants.js'
 import type { LambdaFunction } from './function.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const endpoint = memoize(async () => {
     const _iot = new IoT({})

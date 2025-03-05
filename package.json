@@ -51,6 +51,7 @@
     "yargs": "^17.7.2"
   },
   "devDependencies": {
+    "@aws-lambda-powertools/parser": "^2.15.0",
     "@skyleague/node-standards": "^10.0.1",
     "@skyleague/therefore": "^7.13.1",
     "@types/aws-lambda": "^8.10.147",
@@ -58,7 +59,8 @@
     "@types/js-yaml": "^4.0.9",
     "@types/yargs": "^17.0.33",
     "got": "^14.4.6",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "zod": "^3.24.2"
   },
   "engines": {
     "node": ">=22"
