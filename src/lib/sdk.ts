@@ -32,7 +32,8 @@ export async function $sdk(
                 $restclient(value, {
                     filename: `${key}/rest.client.ts`,
                     ...clientOptions,
-                }),
+                    // biome-ignore lint/suspicious/noExplicitAny: we just pass through
+                } as any),
             ]
         }),
     )
